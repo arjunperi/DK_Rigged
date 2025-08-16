@@ -43,6 +43,22 @@ struct Bet: Identifiable, Codable {
 enum BetType: Codable {
     case roulette(RouletteBetType)
     case sports(SportsBetType)
+    
+    var displayName: String {
+        switch self {
+        case .roulette(let rouletteType):
+            return rouletteType.displayName
+        case .sports(let sportsType):
+            switch sportsType {
+            case .moneyline(let team):
+                return "\(team) Moneyline"
+            case .spread(let team, let points):
+                return "\(team) Spread (\(points > 0 ? "+" : "")\(points))"
+            case .overUnder(let points, let isOver):
+                return "\(isOver ? "Over" : "Under") \(points)"
+            }
+        }
+    }
 }
 
 enum RouletteBetType: Codable, Hashable {
@@ -130,8 +146,10 @@ enum BetOutcome: String, Codable, CaseIterable {
 }
 
 // MARK: - Roulette Types
-enum RouletteColor {
-    case red, black, green
+enum RouletteColor: String {
+    case red = "Red"
+    case black = "Black"
+    case green = "Green"
 }
 
 struct RouletteResult {
