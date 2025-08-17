@@ -18,26 +18,13 @@
 		43DA4B162E5042F500469741 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEA2E5042F100469741 /* ContentView.swift */; };
 		43DA4B172E5042F500469741 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEA2E5042F100469741 /* ContentView.swift */; };
 			43DA4B182E5042F500469742 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEC2E5042F100469742 /* Models.swift */; };
-			43DA4B1F2E5042F500469743 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEC2E5042F100469743 /* AppState.swift */; };
+	43DA4B1F2E5042F500469743 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEC2E5042F100469743 /* AppState.swift */; };
 	43DA4B1A2E5042F500469741 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 43DA4AEC2E5042F500469741 /* Assets.xcassets */; };
-	43DA4B192E5042F500469743 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEC2E5042F100469742 /* Models.swift */; };
-	43DA4B212E5042F500469745 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEC2E5042F100469743 /* AppState.swift */; };
-	43DA4B1B2E5042F500469746 /* SportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AED2E5042F100469743 /* SportsView.swift */; };
-	43DA4B1D2E5042F500469747 /* CasinoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEE2E5042F100469744 /* CasinoView.swift */; };
-	43DA4B1F2E5042F500469749 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEF2E5042F100469745 /* AccountView.swift */; };
 			43DA4B1A2E5042F500469744 /* SportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AED2E5042F100469743 /* SportsView.swift */; };
 	43DA4B202E5042F500469744 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEC2E5042F100469743 /* AppState.swift */; };
 	43DA4B1B2E5042F500469741 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 43DA4AEC2E5042F500469741 /* Assets.xcassets */; };
-	43DA4B232E5042F500469751 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AF12E5042F100469750 /* Theme.swift */; };
-	43DA4B252E5042F500469753 /* RouletteTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AF32E5042F100469752 /* RouletteTableView.swift */; };
-	43DA4B272E5042F500469755 /* RouletteWheelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AF52E5042F100469754 /* RouletteWheelView.swift */; };
-	43DA4B292E5042F500469757 /* ChipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AF72E5042F100469756 /* ChipView.swift */; };
 		43DA4B1C2E5042F500469746 /* CasinoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEE2E5042F100469744 /* CasinoView.swift */; };
 		43DA4B1E2E5042F500469748 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AEF2E5042F100469745 /* AccountView.swift */; };
-		43DA4B222E5042F500469750 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AF12E5042F100469750 /* Theme.swift */; };
-		43DA4B242E5042F500469752 /* RouletteTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AF32E5042F100469752 /* RouletteTableView.swift */; };
-		43DA4B262E5042F500469754 /* RouletteWheelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AF52E5042F100469754 /* RouletteWheelView.swift */; };
-		43DA4B282E5042F500469756 /* ChipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DA4AF72E5042F100469756 /* ChipView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,10 +54,6 @@
 		43DA4AED2E5042F100469743 /* SportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SportsView.swift; sourceTree = "<group>"; };
 		43DA4AEE2E5042F100469744 /* CasinoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CasinoView.swift; sourceTree = "<group>"; };
 		43DA4AEF2E5042F100469745 /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
-		43DA4AF12E5042F100469750 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
-		43DA4AF32E5042F100469752 /* RouletteTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouletteTableView.swift; sourceTree = "<group>"; };
-		43DA4AF52E5042F100469754 /* RouletteWheelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouletteWheelView.swift; sourceTree = "<group>"; };
-		43DA4AF72E5042F100469756 /* ChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChipView.swift; sourceTree = "<group>"; };
 		43DA4AF12E5042F500469741 /* DK_Rigged.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DK_Rigged.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		43DA4AF72E5042F500469741 /* DK_Rigged.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DK_Rigged.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		43DA4AF92E5042F500469741 /* macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = macOS.entitlements; sourceTree = "<group>"; };
@@ -135,10 +118,6 @@
 				43DA4AED2E5042F100469743 /* SportsView.swift */,
 				43DA4AEE2E5042F100469744 /* CasinoView.swift */,
 				43DA4AEF2E5042F100469745 /* AccountView.swift */,
-				43DA4AF12E5042F100469750 /* Theme.swift */,
-				43DA4AF32E5042F100469752 /* RouletteTableView.swift */,
-				43DA4AF52E5042F100469754 /* RouletteWheelView.swift */,
-				43DA4AF72E5042F100469756 /* ChipView.swift */,
 				43DA4AEC2E5042F500469741 /* Assets.xcassets */,
 				43DA4AE72E5042F100469741 /* DK_Rigged.xcdatamodeld */,
 			);
@@ -348,10 +327,6 @@
 				43DA4B1A2E5042F500469744 /* SportsView.swift in Sources */,
 				43DA4B1C2E5042F500469746 /* CasinoView.swift in Sources */,
 				43DA4B1E2E5042F500469748 /* AccountView.swift in Sources */,
-				43DA4B222E5042F500469750 /* Theme.swift in Sources */,
-				43DA4B242E5042F500469752 /* RouletteTableView.swift in Sources */,
-				43DA4B262E5042F500469754 /* RouletteWheelView.swift in Sources */,
-				43DA4B282E5042F500469756 /* ChipView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -362,15 +337,6 @@
 				43DA4B152E5042F500469741 /* DK_RiggedApp.swift in Sources */,
 				43DA4B132E5042F500469741 /* DK_Rigged.xcdatamodeld in Sources */,
 				43DA4B172E5042F500469741 /* ContentView.swift in Sources */,
-				43DA4B192E5042F500469743 /* Models.swift in Sources */,
-				43DA4B212E5042F500469745 /* AppState.swift in Sources */,
-				43DA4B1B2E5042F500469746 /* SportsView.swift in Sources */,
-				43DA4B1D2E5042F500469747 /* CasinoView.swift in Sources */,
-				43DA4B1F2E5042F500469749 /* AccountView.swift in Sources */,
-				43DA4B232E5042F500469751 /* Theme.swift in Sources */,
-				43DA4B252E5042F500469753 /* RouletteTableView.swift in Sources */,
-				43DA4B272E5042F500469755 /* RouletteWheelView.swift in Sources */,
-				43DA4B292E5042F500469757 /* ChipView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -107,7 +107,7 @@ class AppState: ObservableObject {
                 color = riggedColor
             } else {
                 // Fallback to random
-                number = Int.random(in: 0...36)
+                number = Int.random(in: 0...37) // Include 00 (37) for American roulette
                 color = getColorForNumber(number)
             }
             
@@ -117,7 +117,7 @@ class AppState: ObservableObject {
             selectedRiggedColor = nil
         } else {
             // Random spin
-            number = Int.random(in: 0...36)
+            number = Int.random(in: 0...37) // Include 00 (37) for American roulette
             color = getColorForNumber(number)
         }
         
@@ -131,7 +131,7 @@ class AppState: ObservableObject {
     }
     
     private func getColorForNumber(_ number: Int) -> RouletteColor {
-        if number == 0 {
+        if number == 0 || number == 37 { // 0 and 00 (37) are green
             return .green
         }
         
@@ -142,7 +142,8 @@ class AppState: ObservableObject {
     private func getRandomNumberForColor(_ color: RouletteColor) -> Int {
         switch color {
         case .green:
-            return 0
+            let greenNumbers = [0, 37] // 0 and 00
+            return greenNumbers.randomElement() ?? 0
         case .red:
             let redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
             return redNumbers.randomElement() ?? 1
@@ -248,8 +249,6 @@ class AppState: ObservableObject {
             // Sports betting logic would go here
             return (.lost, 0.0)
         }
-        
-        return (.lost, 0.0)
     }
     
     // MARK: - Rigged Mode

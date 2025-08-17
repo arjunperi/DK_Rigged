@@ -7,512 +7,483 @@ struct CasinoView: View {
     let casinoGames = ["Roulette", "Slots", "Blackjack", "Poker"]
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Game selection tabs
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 0) {
-                        ForEach(casinoGames, id: \.self) { game in
-                            GameTabButton(
-                                title: game,
-                                isSelected: selectedGame == game
-                            ) {
-                                selectedGame = game
-                            }
-                        }
-                    }
-                }
-                .padding(.horizontal)
+        VStack(spacing: 0) {
+            // Compact header
+            HStack {
+                Text("Casino")
+                    .font(AppTypography.title2)
+                    .foregroundColor(AppTheme.text)
                 
-                // Game content
-                if selectedGame == "Roulette" {
-                    RouletteGameView()
-                } else {
-                    ComingSoonView(gameName: selectedGame)
-                }
+                Spacer()
+                
+                Text("Balance: $\(Int(appState.currentUser.balance))")
+                    .font(AppTypography.headline)
+                    .foregroundColor(AppTheme.casinoGold)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
-            .navigationTitle("Casino")
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, AppSpacing.xs)
+            .background(AppTheme.surfaceBackground)
+            
+            // Game content - roulette only for now
+            if selectedGame == "Roulette" {
+                RouletteGameView()
+            } else {
+                ComingSoonView(gameName: selectedGame)
+            }
         }
+        .background(AppTheme.background)
     }
 }
 
-struct GameTabButton: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(isSelected ? .white : .primary)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? Color.blue : Color.gray.opacity(0.2))
-                )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
+// MARK: - Main Roulette Game View
 struct RouletteGameView: View {
     @EnvironmentObject var appState: AppState
-    @State private var selectedBetType: RouletteBetType?
-    @State private var betAmount: String = ""
-    @State private var showingRiggedControls = false
-    @State private var riggedNumber: String = ""
-    @State private var selectedRiggedColor: RouletteColor? = nil
+    @State private var showingWheelAnimation = false
     @State private var showingResult = false
     @State private var lastResult: RouletteResult? = nil
+    @State private var showingRiggedControls = false
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Roulette wheel display
-                RouletteWheelView()
+        ZStack {
+            VStack(spacing: 0) {
+                // Main roulette table
+                RouletteTableView()
                 
-                // Betting options
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Place Your Bets")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    RouletteBettingOptionsView(
-                        selectedBetType: $selectedBetType,
-                        betAmount: $betAmount
-                    )
-                    
-                    // Place bet button
-                    Button(action: placeBet) {
-                        Text("Place Bet")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(selectedBetType != nil && !betAmount.isEmpty ? Color.blue : Color.gray)
-                            )
-                    }
-                    .disabled(selectedBetType == nil || betAmount.isEmpty)
-                    .padding(.top)
-                }
-                .padding()
-                
-                // Spin button
-                Button(action: spinWheel) {
-                    Text("SPIN!")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.red)
-                        )
-                }
-                .padding(.horizontal)
-                
-                // Current result display
-                if showingResult, let result = lastResult {
-                    VStack(spacing: 16) {
-                        Text("🎉 SPIN RESULT! 🎉")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                        
-                        HStack(spacing: 20) {
-                            // Number display
-                            VStack(spacing: 4) {
-                                Text("\(result.number)")
-                                    .font(.system(size: 36, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
-                                Text("Number")
-                                    .font(.caption2)
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .lineLimit(1)
-                            }
-                            .frame(width: 90, height: 90)
-                            .background(
-                                Circle()
-                                    .fill(getColorForRouletteColor(result.color))
-                            )
-                            
-                            // Color display
-                            VStack(spacing: 4) {
-                                Text(result.color.rawValue.uppercased())
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
-                                Text("Color")
-                                    .font(.caption2)
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .lineLimit(1)
-                            }
-                            .frame(width: 90, height: 90)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(getColorForRouletteColor(result.color))
-                            )
-                        }
-                        
-                        // Bet outcomes - only show current spin results
-                        let currentSpinBets = appState.bets.filter({ $0.outcome != .pending })
-                        if !currentSpinBets.isEmpty {
-                            VStack(spacing: 8) {
-                                Text("Current Spin Results:")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                
-                                ForEach(currentSpinBets, id: \.id) { bet in
-                                    HStack {
-                                        Text(bet.type.displayName)
-                                            .foregroundColor(.white)
-                                        Spacer()
-                                        if bet.outcome == .won {
-                                            Text("+$\(bet.payout, specifier: "%.2f")")
-                                                .foregroundColor(.green)
-                                                .fontWeight(.bold)
-                                        } else {
-                                            Text("-$\(bet.amount, specifier: "%.2f")")
-                                                .foregroundColor(.red)
-                                                .fontWeight(.bold)
-                                        }
-                                    }
-                                    .font(.subheadline)
-                                }
-                            }
-                            .padding()
-                            .background(Color.black.opacity(0.3))
-                            .cornerRadius(8)
-                        }
-                        
-                        Button("Continue") {
-                            showingResult = false
-                            lastResult = nil
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .foregroundColor(.white)
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.black.opacity(0.9))
-                    )
-                    .cornerRadius(16)
-                    .padding(.horizontal)
-                }
-                
-                // Rigged controls (hidden)
-                Button("Rigged") {
-                    showingRiggedControls.toggle()
-                }
-                .font(.caption)
-                .foregroundColor(.gray)
-                
-                if showingRiggedControls {
-                    VStack(spacing: 16) {
-                        Text("Rigged Mode Controls")
-                            .font(.headline)
-                            .foregroundColor(.red)
-                        
-                        // Number input
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Number (0-36):")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            TextField("Enter number (0-36)", text: $riggedNumber)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .keyboardType(.numberPad)
-                        }
-                        
-                        // Color selection
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Color:")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            HStack(spacing: 12) {
-                                Button(action: { selectedRiggedColor = .red }) {
-                                    Text("Red")
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .fill(selectedRiggedColor == .red ? Color.red : Color.red.opacity(0.6))
-                                        )
-                                }
-                                
-                                Button(action: { selectedRiggedColor = .black }) {
-                                    Text("Black")
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .fill(selectedRiggedColor == .black ? Color.black : Color.black.opacity(0.6))
-                                        )
-                                }
-                                
-                                Button(action: { selectedRiggedColor = .green }) {
-                                    Text("Green")
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .fill(selectedRiggedColor == .green ? Color.green : Color.green.opacity(0.6))
-                                        )
-                                }
-                            }
-                        }
-                        
-                        // Action buttons
-                        HStack(spacing: 12) {
-                            Button("Set Number Only") {
-                                if let number = Int(riggedNumber), number >= 0 && number <= 36 {
-                                    appState.setRiggedNumber(number)
-                                    riggedNumber = ""
-                                    showingRiggedControls = false
-                                }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .disabled(riggedNumber.isEmpty)
-                            
-                            Button("Set Color Only") {
-                                if let color = selectedRiggedColor {
-                                    appState.setRiggedColor(color)
-                                    selectedRiggedColor = nil
-                                    showingRiggedControls = false
-                                }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .disabled(selectedRiggedColor == nil)
-                            
-                            Button("Set Both") {
-                                if let number = Int(riggedNumber), number >= 0 && number <= 36,
-                                   let color = selectedRiggedColor {
-                                    appState.setRiggedNumberAndColor(number, color)
-                                    riggedNumber = ""
-                                    selectedRiggedColor = nil
-                                    showingRiggedControls = false
-                                }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .disabled(riggedNumber.isEmpty || selectedRiggedColor == nil)
-                        }
-                        
-                        Button("Clear All") {
-                            appState.clearRiggedMode()
-                            riggedNumber = ""
-                            selectedRiggedColor = nil
-                            showingRiggedControls = false
-                        }
-                        .buttonStyle(.bordered)
-                        .foregroundColor(.red)
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
-                }
-                
-                // Game history
-                if !appState.gameHistory.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Recent Games")
-                            .font(.headline)
-                            .padding(.horizontal)
-                        
-                        ForEach(appState.gameHistory.prefix(5)) { game in
-                            GameHistoryRow(game: game)
-                        }
-                    }
-                }
+                // Controls section
+                RouletteControlsView(onSpin: spinWheel)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(AppTheme.surfaceBackground)
+            }
+            
+            // Spinning wheel overlay
+            if showingWheelAnimation {
+                RouletteWheelView(
+                    isSpinning: $showingWheelAnimation,
+                    result: $lastResult
+                )
+                .transition(.opacity)
+            }
+            
+            // Result display overlay
+            if showingResult, let result = lastResult {
+                ResultOverlayView(result: result, isShowing: $showingResult)
+                    .transition(.scale.combined(with: .opacity))
             }
         }
-    }
-    
-    private func placeBet() {
-        guard let betType = selectedBetType,
-              let amount = Double(betAmount),
-              amount > 0,
-              amount <= appState.currentUser.balance else { return }
-        
-        let betTypeWrapper = BetType.roulette(betType)
-        appState.placeRouletteBet(betType: betTypeWrapper, amount: amount)
-        
-        // Reset form
-        selectedBetType = nil
-        betAmount = ""
     }
     
     private func spinWheel() {
-        // Clear previous bet results by resetting all bets to pending
+        // Clear previous results
         appState.clearBetResults()
         
-        let result = appState.spinRouletteAndRecord()
-        lastResult = result
-        showingResult = true
+        // Start wheel animation
+        withAnimation(.easeInOut(duration: 0.5)) {
+            showingWheelAnimation = true
+        }
+        
+        // Perform the actual spin after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.lastResult = appState.spinRouletteAndRecord()
+        }
+        
+        // Show result after wheel animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 7.5) {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                self.showingResult = true
+            }
+        }
+    }
+}
+
+// MARK: - Roulette Controls
+struct RouletteControlsView: View {
+    @EnvironmentObject var appState: AppState
+    let onSpin: () -> Void
+    
+    @State private var showingRiggedControls = false
+    
+    var body: some View {
+        VStack(spacing: AppSpacing.xs) {
+            // Top row: Total bet and balance
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Total Bet")
+                        .font(AppTypography.caption)
+                        .foregroundColor(AppTheme.secondaryText)
+                    Text("$\(Int(totalBetAmount))")
+                        .font(AppTypography.headline)
+                        .foregroundColor(AppTheme.text)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Balance")
+                        .font(AppTypography.caption)
+                        .foregroundColor(AppTheme.secondaryText)
+                    Text("$\(Int(appState.currentUser.balance))")
+                        .font(AppTypography.headline)
+                        .foregroundColor(AppTheme.casinoGold)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
+            }
+            
+            // Main control buttons
+            HStack(spacing: AppSpacing.sm) {
+                // Double bet button
+                Button(action: doubleBets) {
+                    Text("x2")
+                        .font(AppTypography.headline)
+                        .foregroundColor(.white)
+                        .frame(minWidth: 60, minHeight: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                .fill(totalBetAmount > 0 ? AppTheme.primary : Color.gray)
+                        )
+                }
+                .disabled(totalBetAmount == 0 || totalBetAmount * 2 > appState.currentUser.balance)
+                
+                // Clear bets button
+                Button(action: clearAllBets) {
+                    Text("CLEAR")
+                        .font(AppTypography.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(minWidth: 60, minHeight: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                .fill(totalBetAmount > 0 ? AppTheme.casinoRed : Color.gray)
+                        )
+                }
+                .disabled(totalBetAmount == 0)
+                
+                // Spin button
+                Button(action: onSpin) {
+                    Text("SPIN")
+                        .font(AppTypography.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                .fill(
+                                    totalBetAmount > 0 ? 
+                                    AppTheme.casinoGold : Color.gray
+                                )
+                        )
+                }
+                .disabled(totalBetAmount == 0)
+            }
+            
+            // Rigged controls toggle
+            Button(action: { showingRiggedControls.toggle() }) {
+                HStack {
+                    Text("Rigged Mode")
+                        .font(AppTypography.caption)
+                    Image(systemName: showingRiggedControls ? "chevron.up" : "chevron.down")
+                        .font(.caption)
+                }
+                .foregroundColor(AppTheme.secondaryText)
+            }
+            
+            // Rigged controls (collapsible)
+            if showingRiggedControls {
+                RiggedControlsView()
+                    .transition(.slide)
+            }
+        }
+    }
+    
+    private var totalBetAmount: Double {
+        return appState.bets
+            .filter { bet in
+                if case .roulette(_) = bet.type {
+                    return bet.outcome == .pending
+                }
+                return false
+            }
+            .reduce(0) { $0 + $1.amount }
+    }
+    
+    private func doubleBets() {
+        let currentBets = appState.bets.filter { bet in
+            if case .roulette(_) = bet.type {
+                return bet.outcome == .pending
+            }
+            return false
+        }
+        
+        for bet in currentBets {
+            if appState.currentUser.balance >= bet.amount {
+                appState.placeRouletteBet(betType: bet.type, amount: bet.amount)
+            }
+        }
+    }
+    
+    private func clearAllBets() {
+        // Return bet amounts to balance
+        let pendingBets = appState.bets.filter { bet in
+            if case .roulette(_) = bet.type {
+                return bet.outcome == .pending
+            }
+            return false
+        }
+        
+        let totalRefund = pendingBets.reduce(0) { $0 + $1.amount }
+        appState.currentUser.balance += totalRefund
+        
+        // Remove pending bets
+        appState.bets.removeAll { bet in
+            if case .roulette(_) = bet.type {
+                return bet.outcome == .pending
+            }
+            return false
+        }
+        
+        // Clear visual results
+        appState.clearBetResults()
+    }
+}
+
+// MARK: - Rigged Controls
+struct RiggedControlsView: View {
+    @EnvironmentObject var appState: AppState
+    @State private var riggedNumber: String = ""
+    @State private var selectedRiggedColor: RouletteColor? = nil
+    
+    var body: some View {
+        VStack(spacing: AppSpacing.xs) {
+            Text("Rigged Mode Controls")
+                .font(AppTypography.caption)
+                .foregroundColor(AppTheme.secondaryText)
+            
+            HStack(spacing: AppSpacing.sm) {
+                // Rigged number input
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Number")
+                        .font(AppTypography.caption2)
+                        .foregroundColor(AppTheme.secondaryText)
+                    
+                    TextField("0-36", text: $riggedNumber)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .keyboardType(.numberPad)
+                        .frame(width: 60)
+                }
+                
+                // Rigged color selection
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Color")
+                        .font(AppTypography.caption2)
+                        .foregroundColor(AppTheme.secondaryText)
+                    
+                    HStack(spacing: 4) {
+                        ForEach([RouletteColor.red, RouletteColor.black, RouletteColor.green], id: \.self) { color in
+                            Button(action: { selectedRiggedColor = color }) {
+                                Circle()
+                                    .fill(getColorForRouletteColor(color))
+                                    .frame(width: 24, height: 24)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(
+                                                selectedRiggedColor == color ? AppTheme.casinoGold : Color.clear,
+                                                lineWidth: 2
+                                            )
+                                    )
+                            }
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                // Set/Clear buttons
+                VStack(spacing: 4) {
+                    Button("Set") {
+                        setRiggedMode()
+                    }
+                    .buttonStyle(CasinoButtonStyle(isSelected: false))
+                    .disabled(riggedNumber.isEmpty && selectedRiggedColor == nil)
+                    
+                    Button("Clear") {
+                        clearRiggedMode()
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                }
+            }
+            
+            // Current rigged settings display
+            if appState.isRiggedMode {
+                HStack {
+                    Text("Active:")
+                        .font(AppTypography.caption2)
+                        .foregroundColor(AppTheme.secondaryText)
+                    
+                    if let riggedNum = appState.selectedRiggedNumber {
+                        Text("Number \(riggedNum)")
+                            .font(AppTypography.caption2)
+                            .foregroundColor(AppTheme.casinoGold)
+                    }
+                    
+                    if let riggedCol = appState.selectedRiggedColor {
+                        Text(riggedCol.rawValue)
+                            .font(AppTypography.caption2)
+                            .foregroundColor(getColorForRouletteColor(riggedCol))
+                    }
+                    
+                    Spacer()
+                }
+            }
+        }
+        .padding(AppSpacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                .fill(AppTheme.surfaceBackground.opacity(0.5))
+        )
+    }
+    
+    private func setRiggedMode() {
+        if let number = Int(riggedNumber), number >= 0 && number <= 36 {
+            if let color = selectedRiggedColor {
+                appState.setRiggedNumberAndColor(number, color)
+            } else {
+                appState.setRiggedNumber(number)
+            }
+        } else if let color = selectedRiggedColor {
+            appState.setRiggedColor(color)
+        }
+    }
+    
+    private func clearRiggedMode() {
+        appState.clearRiggedMode()
+        riggedNumber = ""
+        selectedRiggedColor = nil
     }
     
     private func getColorForRouletteColor(_ color: RouletteColor) -> Color {
         switch color {
-        case .red:
-            return .red
-        case .black:
-            return .black
-        case .green:
-            return .green
+        case .red: return AppTheme.casinoRed
+        case .black: return AppTheme.casinoBlack
+        case .green: return AppTheme.casinoGreen
         }
     }
 }
 
-struct RouletteWheelView: View {
-    var body: some View {
-        VStack {
-            ZStack {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [.red, .black, .green],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 100
-                        )
-                    )
-                    .frame(width: 200, height: 200)
-                
-                Circle()
-                    .stroke(Color.white, lineWidth: 4)
-                    .frame(width: 200, height: 200)
-                
-                Text("🎰")
-                    .font(.system(size: 60))
-            }
-            
-            Text("Roulette Wheel")
-                .font(.headline)
-                .padding(.top)
-        }
-        .padding()
-    }
-}
-
-struct RouletteBettingOptionsView: View {
-    @Binding var selectedBetType: RouletteBetType?
-    @Binding var betAmount: String
+// MARK: - Result Overlay
+struct ResultOverlayView: View {
+    let result: RouletteResult
+    @Binding var isShowing: Bool
     
     var body: some View {
-        VStack(spacing: 12) {
-            // Bet type selection
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
-                ForEach(RouletteBetType.allRouletteTypes, id: \.self) { betType in
-                    BetTypeButton(
-                        betType: betType,
-                        isSelected: selectedBetType == betType
-                    ) {
-                        selectedBetType = betType
+        ZStack {
+            Color.black.opacity(0.8)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        isShowing = false
                     }
                 }
-            }
             
-            // Bet amount input
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Bet Amount")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+            VStack(spacing: AppSpacing.md) {
+                Text("Result")
+                    .font(AppTypography.title)
+                    .foregroundColor(AppTheme.text)
                 
-                TextField("Enter amount", text: $betAmount)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.decimalPad)
-            }
-        }
-    }
-}
-
-struct BetTypeButton: View {
-    let betType: RouletteBetType
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Text(betType.displayName)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .multilineTextAlignment(.center)
+                // Winning number display
+                Text("\(result.number)")
+                    .font(.system(size: 72, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(
+                        Circle()
+                            .fill(getColorForNumber(result.number))
+                            .overlay(
+                                Circle()
+                                    .stroke(AppTheme.casinoGold, lineWidth: 4)
+                            )
+                    )
                 
-                Text("\(betType.payoutMultiplier, specifier: "%.0f")x")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                Text(result.color.rawValue.uppercased())
+                    .font(AppTypography.headline)
+                    .foregroundColor(getColorForNumber(result.number))
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.xs)
+                    .background(
+                        RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                            .fill(getColorForNumber(result.number).opacity(0.2))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                    .stroke(getColorForNumber(result.number), lineWidth: 2)
+                            )
+                    )
+                
+                Button("Continue") {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        isShowing = false
+                    }
+                }
+                .buttonStyle(PrimaryButtonStyle())
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            .padding(AppSpacing.xl)
             .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.blue : Color.gray.opacity(0.2))
+                RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                    .fill(AppTheme.surfaceBackground)
             )
-            .foregroundColor(isSelected ? .white : .primary)
+            .padding(AppSpacing.xl)
         }
-        .buttonStyle(PlainButtonStyle())
     }
-}
-
-struct GameHistoryRow: View {
-    let game: RouletteGame
     
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text("Winning Number: \(game.winningNumber ?? 0)")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text("Bets: \(game.bets.count)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            Text(game.timestamp, style: .time)
-                .font(.caption)
-                .foregroundColor(.secondary)
+    private func getColorForNumber(_ number: Int) -> Color {
+        switch number {
+        case 0: return AppTheme.casinoGreen
+        case 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36:
+            return AppTheme.casinoRed
+        default:
+            return AppTheme.casinoBlack
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
-        .padding(.horizontal)
     }
 }
 
+// MARK: - Coming Soon View
 struct ComingSoonView: View {
     let gameName: String
     
     var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "gamecontroller.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
+        VStack(spacing: AppSpacing.lg) {
+            Image(systemName: "gamecontroller")
+                .font(.system(size: 64))
+                .foregroundColor(AppTheme.secondaryText)
             
-            Text("\(gameName) Coming Soon!")
-                .font(.title2)
-                .fontWeight(.semibold)
+            Text("\(gameName)")
+                .font(AppTypography.title)
+                .foregroundColor(AppTheme.text)
             
-            Text("This exciting casino game is currently under development.")
-                .font(.body)
-                .foregroundColor(.secondary)
+            Text("Coming Soon")
+                .font(AppTypography.headline)
+                .foregroundColor(AppTheme.secondaryText)
+            
+            Text("This game is currently under development. Stay tuned for updates!")
+                .font(AppTypography.body)
+                .foregroundColor(AppTheme.secondaryText)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal)
+                .padding(.horizontal, AppSpacing.xl)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AppTheme.background)
+    }
+}
+
+// MARK: - Preview Provider
+struct CasinoView_Previews: PreviewProvider {
+    static var previews: some View {
+        CasinoView()
+            .environmentObject(AppState())
     }
 } 
