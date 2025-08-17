@@ -9,8 +9,8 @@ struct RouletteWheelView: View {
     @State private var ballRadius: CGFloat = 80
     @State private var showResult = false
     
-    // Roulette numbers in standard European order
-    private let wheelNumbers = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26]
+    // Roulette numbers in correct American roulette order (clockwise from 0)
+    private let wheelNumbers = [0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1, 37, 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2]
     
     var body: some View {
         ZStack {
@@ -23,27 +23,10 @@ struct RouletteWheelView: View {
                 
                 // Wheel container
                 ZStack {
-                    // Outer rim
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [Color.brown, Color.brown.opacity(0.6)],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 120
-                            )
-                        )
+                    // Single unified roulette wheel
+                    UnifiedRouletteWheel(numbers: wheelNumbers)
                         .frame(width: 240, height: 240)
-                    
-                    // Wheel segments
-                    ForEach(Array(wheelNumbers.enumerated()), id: \.offset) { index, number in
-                        WheelSegment(
-                            number: number,
-                            angle: Double(index) * (360.0 / Double(wheelNumbers.count)),
-                            segmentAngle: 360.0 / Double(wheelNumbers.count)
-                        )
                         .rotationEffect(.degrees(wheelRotation))
-                    }
                     
                     // Center hub
                     Circle()
@@ -105,23 +88,23 @@ struct RouletteWheelView: View {
     private func startSpinAnimation() {
         showResult = false
         
-        // Start wheel spinning
-        withAnimation(.linear(duration: 4.0).repeatCount(1, autoreverses: false)) {
+        // Start wheel spinning (slower)
+        withAnimation(.linear(duration: 6.0).repeatCount(1, autoreverses: false)) {
             wheelRotation += 1440 // 4 full rotations
         }
         
-        // Start ball spinning (opposite direction, faster)
-        withAnimation(.linear(duration: 3.5).repeatCount(1, autoreverses: false)) {
+        // Start ball spinning (opposite direction, slower)
+        withAnimation(.linear(duration: 5.5).repeatCount(1, autoreverses: false)) {
             ballRotation -= 2160 // 6 full rotations opposite direction
         }
         
         // Ball radius animation (moves inward as it slows)
-        withAnimation(.easeOut(duration: 3.5)) {
+        withAnimation(.easeOut(duration: 5.5)) {
             ballRadius = 60
         }
         
         // Show result after animation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
             showResult = true
             
             // Auto-exit after showing result
@@ -147,7 +130,7 @@ struct RouletteWheelView: View {
     
     private func getColorForNumber(_ number: Int) -> Color {
         switch number {
-        case 0: return AppTheme.casinoGreen
+        case 0, 37: return AppTheme.casinoGreen // 0 and 00 (37) are green
         case 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36:
             return AppTheme.casinoRed
         default:
@@ -156,52 +139,105 @@ struct RouletteWheelView: View {
     }
 }
 
-// MARK: - Wheel Segment
-struct WheelSegment: View {
-    let number: Int
-    let angle: Double
-    let segmentAngle: Double
+// MARK: - Unified Roulette Wheel
+struct UnifiedRouletteWheel: View {
+    let numbers: [Int]
     
     var body: some View {
         ZStack {
-            // Segment background
-            Path { path in
-                let center = CGPoint(x: 0, y: 0)
-                let radius: CGFloat = 100
-                let startAngle = Angle.degrees(angle - segmentAngle/2)
-                let endAngle = Angle.degrees(angle + segmentAngle/2)
-                
-                path.move(to: center)
-                path.addArc(center: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
-                path.closeSubpath()
-            }
-            .fill(getColorForNumber(number))
-            .overlay(
-                Path { path in
-                    let center = CGPoint(x: 0, y: 0)
-                    let radius: CGFloat = 100
-                    let startAngle = Angle.degrees(angle - segmentAngle/2)
-                    let endAngle = Angle.degrees(angle + segmentAngle/2)
-                    
-                    path.move(to: center)
-                    path.addArc(center: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
-                    path.closeSubpath()
-                }
-                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-            )
+            // Outer wooden rim (like reference image)
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color.brown.opacity(0.8), Color.brown.opacity(0.4)],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 200
+                    )
+                )
+                .frame(width: 420, height: 420)
+                .overlay(
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.yellow.opacity(0.8), Color.orange.opacity(0.6)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 8
+                        )
+                )
             
-            // Number text
-            Text("\(number)")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.white)
-                .offset(y: -70)
-                .rotationEffect(.degrees(angle))
+            // Main wheel with all segments
+            Canvas { context, size in
+                let center = CGPoint(x: size.width/2, y: size.height/2)
+                let radius: CGFloat = min(size.width, size.height) * 0.42 // Even larger inner circle
+                let segmentAngle = 360.0 / Double(numbers.count)
+            
+            // Draw all segments
+            for (index, number) in numbers.enumerated() {
+                let startAngle = Double(index) * segmentAngle - 90 // Start from top
+                let endAngle = startAngle + segmentAngle
+                
+                // Create segment path
+                var path = Path()
+                path.move(to: center)
+                path.addArc(
+                    center: center,
+                    radius: radius,
+                    startAngle: .degrees(startAngle),
+                    endAngle: .degrees(endAngle),
+                    clockwise: false
+                )
+                path.closeSubpath()
+                
+                // Fill with appropriate color
+                context.fill(path, with: .color(getColorForNumber(number)))
+                
+                // Add clean white border between segments
+                context.stroke(path, with: .color(.white), lineWidth: 2)
+                
+                // Add number text - positioned better for larger wheel
+                let textAngle = startAngle + segmentAngle/2
+                let textRadius = radius * 0.75 // Closer to edge for better fit
+                let textX = center.x + cos(textAngle * .pi / 180) * textRadius
+                let textY = center.y + sin(textAngle * .pi / 180) * textRadius
+                
+                // Calculate optimal font size based on segment size (much larger numbers)
+                let segmentWidth = 2 * .pi * textRadius * CGFloat(segmentAngle / 360.0)
+                let fontSize = min(segmentWidth * 0.7, 36) // Much larger numbers like reference
+                
+                context.draw(
+                    Text(displayNumber(number))
+                        .font(.system(size: fontSize, weight: .bold))
+                        .foregroundColor(.white),
+                    at: CGPoint(x: textX, y: textY)
+                )
+            }
+            
+            // Add outer rim stroke for clean edge
+            let outerPath = Path { path in
+                path.addEllipse(in: CGRect(
+                    x: center.x - radius,
+                    y: center.y - radius,
+                    width: radius * 2,
+                    height: radius * 2
+                ))
+            }
+            context.stroke(outerPath, with: .color(.white), lineWidth: 3)
         }
+        .frame(width: 380, height: 380) // Much larger canvas for bigger circle
+        }
+        .frame(width: 420, height: 420) // Overall larger frame
+    }
+    
+    private func displayNumber(_ number: Int) -> String {
+        return number == 37 ? "00" : "\(number)"
     }
     
     private func getColorForNumber(_ number: Int) -> Color {
         switch number {
-        case 0: return AppTheme.casinoGreen
+        case 0, 37: return AppTheme.casinoGreen // 0 and 00 (37) are green
         case 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36:
             return AppTheme.casinoRed
         default:
@@ -217,7 +253,7 @@ struct ResultDisplayView: View {
     var body: some View {
         VStack(spacing: AppSpacing.sm) {
             // Winning number
-            Text("\(result.number)")
+            Text(displayNumber(result.number))
                 .font(.system(size: 48, weight: .bold))
                 .foregroundColor(.white)
                 .padding()
@@ -253,9 +289,13 @@ struct ResultDisplayView: View {
         }
     }
     
+    private func displayNumber(_ number: Int) -> String {
+        return number == 37 ? "00" : "\(number)"
+    }
+    
     private func getColorForNumber(_ number: Int) -> Color {
         switch number {
-        case 0: return AppTheme.casinoGreen
+        case 0, 37: return AppTheme.casinoGreen // 0 and 00 (37) are green
         case 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36:
             return AppTheme.casinoRed
         default:

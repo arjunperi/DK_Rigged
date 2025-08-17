@@ -89,8 +89,8 @@ struct RouletteGameView: View {
             self.lastResult = appState.spinRouletteAndRecord()
         }
         
-        // Show result after wheel animation completes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 7.5) {
+        // Show result after wheel animation completes (longer duration)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 9.5) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 self.showingResult = true
             }
