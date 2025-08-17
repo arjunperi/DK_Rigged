@@ -10,9 +10,6 @@ struct RouletteTableView: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(spacing: AppSpacing.xxs) {
-                    // Chip selector
-                    ChipSelectorView(selectedChipValue: $selectedChipValue)
-                    
                     // Main roulette table
                     RouletteTable(
                         placedBets: $placedBets,
@@ -22,6 +19,20 @@ struct RouletteTableView: View {
                     )
                     .padding(.horizontal, 16) // Equal small margins
                     .padding(.vertical, 8)
+                    
+                    // Chip selection below the table
+                    HStack(spacing: AppSpacing.sm) {
+                        ForEach([1.0, 5.0, 10.0, 25.0, 50.0, 100.0], id: \.self) { chipValue in
+                            ChipSelectorButton(
+                                value: chipValue,
+                                isSelected: selectedChipValue == chipValue
+                            ) {
+                                selectedChipValue = chipValue
+                            }
+                        }
+                    }
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.xs)
                 }
             }
         }
@@ -29,7 +40,7 @@ struct RouletteTableView: View {
     
     private func calculateCellSize(for size: CGSize) -> CGSize {
         let tableWidth = size.width - 32 // Small equal margins on left/right
-        let tableHeight = size.height - 80 // Reserve space for controls
+        let tableHeight = size.height - 120 // Reserve space for controls and chips below
         
         // DraftKings has 2 narrow columns + 3 wide columns
         let narrowWidth = min(tableWidth / 8, 45) // Narrow columns (left bets + dozens)
@@ -41,7 +52,7 @@ struct RouletteTableView: View {
     
     private func calculateNarrowCellSize(for size: CGSize) -> CGSize {
         let tableWidth = size.width - 32
-        let tableHeight = size.height - 80
+        let tableHeight = size.height - 120
         
         let narrowWidth = min(tableWidth / 8, 45) // Narrow columns
         let cellHeight = min(tableHeight / 14, 45)
@@ -306,7 +317,7 @@ struct BettingArea: View {
                     
                     // Show placed chips
                     if let betAmount = getBetAmount(for: betKey), betAmount > 0 {
-                        ChipView(value: getChipValue(for: betAmount), size: min(cellSize.width * 0.6, 30))
+                        ChipView(value: getChipValue(for: betAmount), size: min(cellSize.width * 0.4, 20))
                     }
                 }
             )

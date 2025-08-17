@@ -54,8 +54,6 @@ struct ChipView: View {
         case 25: return AppTheme.casinoGreen
         case 50: return Color.orange
         case 100: return Color.black
-        case 250: return Color.purple
-        case 500: return AppTheme.casinoGold
         default: return Color.gray
         }
     }
@@ -89,7 +87,7 @@ struct ChipStack: View {
 // MARK: - Chip Selector Bar
 struct ChipSelectorView: View {
     @Binding var selectedChipValue: Double
-    let availableChips: [Double] = [1, 5, 10, 25, 50, 100, 250, 500]
+    let availableChips: [Double] = [1, 5, 10, 25, 50, 100]
     
     var body: some View {
         VStack(spacing: AppSpacing.xxs) {
@@ -109,6 +107,7 @@ struct ChipSelectorView: View {
                     }
                 }
                 .padding(.horizontal, AppSpacing.sm)
+                .frame(maxWidth: .infinity) // Center the chips
             }
         }
         .padding(.vertical, AppSpacing.xxs)
@@ -124,14 +123,14 @@ struct ChipSelectorButton: View {
     
     var body: some View {
         Button(action: action) {
-            ChipView(value: value, size: 50)
+            ChipView(value: value, size: 32)
                 .overlay(
                     Circle()
                         .stroke(
                             isSelected ? AppTheme.casinoGold : Color.clear,
-                            lineWidth: 3
+                            lineWidth: 2
                         )
-                        .frame(width: 56, height: 56)
+                        .frame(width: 36, height: 36)
                 )
                 .scaleEffect(isPressed ? 0.9 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
@@ -194,12 +193,12 @@ struct ChipView_Previews: PreviewProvider {
             // Individual chips
             HStack {
                 ForEach([1.0, 5.0, 10.0, 25.0, 50.0], id: \.self) { value in
-                    ChipView(value: value, size: 60)
+                    ChipView(value: value, size: 32)
                 }
             }
             
             // Chip stack
-            ChipStack(values: [100, 25, 5], size: 50)
+            ChipStack(values: [100, 25, 5], size: 32)
             
             // Chip selector
             ChipSelectorView(selectedChipValue: .constant(25))
