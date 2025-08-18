@@ -16,6 +16,7 @@ struct AppTheme {
     static let casinoBlack = Color.black
     static let casinoGold = Color(red: 1.0, green: 0.8, blue: 0.0)
     static let casinoBlue = Color(red: 0.08, green: 0.12, blue: 0.35) // DraftKings-style blue
+    static let velvetGreen = Color(red: 0.0, green: 0.39, blue: 0.0) // Rich velvet green
     
     // Border colors
     static let border = Color.white.opacity(0.2)
@@ -32,6 +33,17 @@ struct AppTheme {
         colors: [Color.black, Color.gray.opacity(0.3)],
         startPoint: .top,
         endPoint: .bottom
+    )
+    
+    static let velvetGreenGradient = RadialGradient(
+        colors: [
+            Color(red: 0.0, green: 0.45, blue: 0.0), // Lighter center
+            Color(red: 0.0, green: 0.39, blue: 0.0), // Base velvet green
+            Color(red: 0.0, green: 0.32, blue: 0.0)  // Darker edges
+        ],
+        center: .center,
+        startRadius: 50,
+        endRadius: 400
     )
 }
 

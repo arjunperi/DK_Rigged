@@ -63,6 +63,11 @@ enum BetType: Codable {
 
 enum RouletteBetType: Codable, Hashable {
     case singleNumber(Int)
+    case split([Int]) // Two adjacent numbers
+    case street([Int]) // Three numbers in a row
+    case corner([Int]) // Four numbers in a square
+    case fiveNumber // 0, 00, 1, 2, 3 (American roulette only)
+    case line([Int]) // Two rows of three numbers
     case red
     case black
     case even
@@ -79,7 +84,17 @@ enum RouletteBetType: Codable, Hashable {
     var displayName: String {
         switch self {
         case .singleNumber(let number):
-            return "Number \(number)"
+            return number == 37 ? "00" : "Number \(number)"
+        case .split(let numbers):
+            return "Split \(numbers.map { $0 == 37 ? "00" : "\($0)" }.joined(separator:", "))"
+        case .street(let numbers):
+            return "Street \(numbers.map { $0 == 37 ? "00" : "\($0)" }.joined(separator:", "))"
+        case .corner(let numbers):
+            return "Corner \(numbers.map { $0 == 37 ? "00" : "\($0)" }.joined(separator:", "))"
+        case .fiveNumber:
+            return "Five Number (0,00,1,2,3)"
+        case .line(let numbers):
+            return "Line \(numbers.map { $0 == 37 ? "00" : "\($0)" }.joined(separator:", "))"
         case .red:
             return "Red"
         case .black:
@@ -108,10 +123,12 @@ enum RouletteBetType: Codable, Hashable {
     }
     
     static let allRouletteTypes: [RouletteBetType] = [
-        .singleNumber(0), .singleNumber(1), .singleNumber(2), .singleNumber(3), .singleNumber(4), .singleNumber(5), .singleNumber(6), .singleNumber(7), .singleNumber(8), .singleNumber(9),
+        .singleNumber(0), .singleNumber(37), // 0 and 00
+        .singleNumber(1), .singleNumber(2), .singleNumber(3), .singleNumber(4), .singleNumber(5), .singleNumber(6), .singleNumber(7), .singleNumber(8), .singleNumber(9),
         .singleNumber(10), .singleNumber(11), .singleNumber(12), .singleNumber(13), .singleNumber(14), .singleNumber(15), .singleNumber(16), .singleNumber(17), .singleNumber(18), .singleNumber(19),
         .singleNumber(20), .singleNumber(21), .singleNumber(22), .singleNumber(23), .singleNumber(24), .singleNumber(25), .singleNumber(26), .singleNumber(27), .singleNumber(28), .singleNumber(29),
         .singleNumber(30), .singleNumber(31), .singleNumber(32), .singleNumber(33), .singleNumber(34), .singleNumber(35), .singleNumber(36),
+        .fiveNumber, // American roulette special bet
         .red, .black, .even, .odd, .low, .high,
         .dozen1, .dozen2, .dozen3,
         .column1, .column2, .column3
@@ -120,13 +137,23 @@ enum RouletteBetType: Codable, Hashable {
     var payoutMultiplier: Double {
         switch self {
         case .singleNumber:
-            return 35.0
+            return 36.0 // 35:1 means you get 35 + your original bet = 36 total
+        case .split:
+            return 18.0 // 17:1 payout
+        case .street:
+            return 12.0 // 11:1 payout
+        case .corner:
+            return 9.0 // 8:1 payout
+        case .fiveNumber:
+            return 7.0 // 6:1 payout
+        case .line:
+            return 6.0 // 5:1 payout
         case .red, .black, .even, .odd, .low, .high:
-            return 2.0
+            return 2.0 // 1:1 means you get 1 + your original bet = 2 total
         case .dozen1, .dozen2, .dozen3:
-            return 3.0
+            return 3.0 // 2:1 payout
         case .column1, .column2, .column3:
-            return 3.0
+            return 3.0 // 2:1 payout
         }
     }
 }

@@ -168,7 +168,37 @@ class AppState: ObservableObject {
             switch rouletteType {
             case .singleNumber(let number):
                 if result.number == number {
-                    return (.won, bet.amount * 35.0)
+                    return (.won, bet.amount * 36.0)
+                } else {
+                    return (.lost, 0.0)
+                }
+            case .split(let numbers):
+                if numbers.contains(result.number) {
+                    return (.won, bet.amount * 18.0)
+                } else {
+                    return (.lost, 0.0)
+                }
+            case .street(let numbers):
+                if numbers.contains(result.number) {
+                    return (.won, bet.amount * 12.0)
+                } else {
+                    return (.lost, 0.0)
+                }
+            case .corner(let numbers):
+                if numbers.contains(result.number) {
+                    return (.won, bet.amount * 9.0)
+                } else {
+                    return (.lost, 0.0)
+                }
+            case .fiveNumber:
+                if [0, 37, 1, 2, 3].contains(result.number) {
+                    return (.won, bet.amount * 7.0)
+                } else {
+                    return (.lost, 0.0)
+                }
+            case .line(let numbers):
+                if numbers.contains(result.number) {
+                    return (.won, bet.amount * 6.0)
                 } else {
                     return (.lost, 0.0)
                 }
@@ -185,13 +215,13 @@ class AppState: ObservableObject {
                     return (.lost, 0.0)
                 }
             case .even:
-                if result.number != 0 && result.number % 2 == 0 {
+                if result.number != 0 && result.number != 37 && result.number % 2 == 0 {
                     return (.won, bet.amount * 2.0)
                 } else {
                     return (.lost, 0.0)
                 }
             case .odd:
-                if result.number != 0 && result.number % 2 == 1 {
+                if result.number != 0 && result.number != 37 && result.number % 2 == 1 {
                     return (.won, bet.amount * 2.0)
                 } else {
                     return (.lost, 0.0)
@@ -227,19 +257,25 @@ class AppState: ObservableObject {
                     return (.lost, 0.0)
                 }
             case .column1:
-                if result.number % 3 == 1 {
+                // Column 1: 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36
+                let column1Numbers = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36]
+                if column1Numbers.contains(result.number) {
                     return (.won, bet.amount * 3.0)
                 } else {
                     return (.lost, 0.0)
                 }
             case .column2:
-                if result.number % 3 == 2 {
+                // Column 2: 2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35
+                let column2Numbers = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35]
+                if column2Numbers.contains(result.number) {
                     return (.won, bet.amount * 3.0)
                 } else {
                     return (.lost, 0.0)
                 }
             case .column3:
-                if result.number % 3 == 0 && result.number != 0 {
+                // Column 3: 1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34
+                let column3Numbers = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]
+                if column3Numbers.contains(result.number) {
                     return (.won, bet.amount * 3.0)
                 } else {
                     return (.lost, 0.0)

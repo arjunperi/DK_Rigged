@@ -33,7 +33,7 @@ struct CasinoView: View {
                 ComingSoonView(gameName: selectedGame)
             }
         }
-        .background(AppTheme.background)
+        .background(AppTheme.velvetGreenGradient)
     }
 }
 
@@ -183,15 +183,11 @@ struct RouletteControlsView: View {
                 .disabled(totalBetAmount == 0)
             }
             
-            // Rigged controls toggle
+            // Hidden rigged controls toggle (discrete arrow)
             Button(action: { showingRiggedControls.toggle() }) {
-                HStack {
-                    Text("Rigged Mode")
-                        .font(AppTypography.caption)
-                    Image(systemName: showingRiggedControls ? "chevron.up" : "chevron.down")
-                        .font(.caption)
-                }
-                .foregroundColor(AppTheme.secondaryText)
+                Image(systemName: showingRiggedControls ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(AppTheme.secondaryText.opacity(0.6))
             }
             
             // Rigged controls (collapsible)
@@ -261,10 +257,6 @@ struct RiggedControlsView: View {
     
     var body: some View {
         VStack(spacing: AppSpacing.xs) {
-            Text("Rigged Mode Controls")
-                .font(AppTypography.caption)
-                .foregroundColor(AppTheme.secondaryText)
-            
             HStack(spacing: AppSpacing.sm) {
                 // Rigged number input
                 VStack(alignment: .leading, spacing: 4) {
