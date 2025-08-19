@@ -5,36 +5,65 @@ struct ChipView: View {
     let value: Double
     let size: CGFloat
     @State private var isAnimating = false
-    
+
     var body: some View {
         ZStack {
-            // Chip background with gradient
+            // Main chip body with realistic gradient
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [chipColor.opacity(0.8), chipColor],
+                        colors: [chipColor.opacity(0.9), chipColor, chipColor.opacity(0.7)],
                         center: .topLeading,
                         startRadius: 0,
                         endRadius: size/2
                     )
                 )
                 .frame(width: size, height: size)
-            
-            // Chip border
+
+            // Outer edge highlight (like real casino chips)
             Circle()
-                .stroke(Color.white.opacity(0.8), lineWidth: 2)
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.6), Color.white.opacity(0.2)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2
+                )
                 .frame(width: size, height: size)
-            
-            // Inner decoration ring
+
+            // Inner colored stripes (like DK chips)
+            ForEach(0..<8) { index in
+                let angle = Double(index) * 45
+                Rectangle()
+                    .fill(chipAccentColor)
+                    .frame(width: 2, height: size * 0.3)
+                    .offset(y: -size * 0.25)
+                    .rotationEffect(.degrees(angle))
+            }
+
+            // Center circle with value
             Circle()
-                .stroke(chipColor.opacity(0.6), lineWidth: 1)
-                .frame(width: size * 0.7, height: size * 0.7)
-            
+                .fill(
+                    RadialGradient(
+                        colors: [chipColor.opacity(0.9), chipColor],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: size * 0.25
+                    )
+                )
+                .frame(width: size * 0.5, height: size * 0.5)
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.8), lineWidth: 1)
+                        .frame(width: size * 0.5, height: size * 0.5)
+                )
+
             // Chip value text
             Text(chipValueText)
-                .font(.system(size: min(size * 0.25, 14), weight: .bold))
+                .font(.system(size: min(size * 0.2, 12), weight: .bold))
                 .foregroundColor(.white)
-                .shadow(color: .black.opacity(0.5), radius: 1, x: 0, y: 1)
+                .shadow(color: .black.opacity(0.8), radius: 1, x: 0, y: 1)
         }
         .scaleEffect(isAnimating ? 1.1 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isAnimating)
@@ -45,7 +74,7 @@ struct ChipView: View {
             }
         }
     }
-    
+
     private var chipColor: Color {
         switch value {
         case 1: return Color.white
@@ -57,7 +86,19 @@ struct ChipView: View {
         default: return Color.gray
         }
     }
-    
+
+    private var chipAccentColor: Color {
+        switch value {
+        case 1: return Color.gray
+        case 5: return Color.white
+        case 10: return Color.white
+        case 25: return Color.white
+        case 50: return Color.white
+        case 100: return AppTheme.casinoGold
+        default: return Color.white
+        }
+    }
+
     private var chipValueText: String {
         if value >= 1000 {
             return "\(Int(value/1000))K"
@@ -73,7 +114,7 @@ struct ChipView: View {
 struct ChipStack: View {
     let values: [Double]
     let size: CGFloat
-    
+
     var body: some View {
         ZStack {
             ForEach(Array(values.enumerated()), id: \.offset) { index, value in
@@ -88,13 +129,13 @@ struct ChipStack: View {
 struct ChipSelectorView: View {
     @Binding var selectedChipValue: Double
     let availableChips: [Double] = [1, 5, 10, 25, 50, 100]
-    
+
     var body: some View {
         VStack(spacing: AppSpacing.xxs) {
             Text("Select Chip")
                 .font(AppTypography.caption)
                 .foregroundColor(AppTheme.secondaryText)
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: AppSpacing.sm) {
                     ForEach(availableChips, id: \.self) { chipValue in
@@ -120,17 +161,17 @@ struct ChipSelectorButton: View {
     let isSelected: Bool
     let action: () -> Void
     @State private var isPressed = false
-    
+
     var body: some View {
         Button(action: action) {
-            ChipView(value: value, size: 32)
+            ChipView(value: value, size: 40)
                 .overlay(
                     Circle()
                         .stroke(
                             isSelected ? AppTheme.casinoGold : Color.clear,
                             lineWidth: 2
                         )
-                        .frame(width: 36, height: 36)
+                        .frame(width: 44, height: 44)
                 )
                 .scaleEffect(isPressed ? 0.9 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
@@ -150,13 +191,13 @@ struct ChipSelectorButton: View {
 struct ChipStackIndicator: View {
     let totalAmount: Double
     let chipSize: CGFloat
-    
+
     var body: some View {
         if totalAmount > 0 {
             ZStack {
                 // Show appropriate chip based on total amount
                 ChipView(value: getChipValueForStack(totalAmount), size: chipSize)
-                
+
                 // Show stack count if more than one chip worth
                 if totalAmount > getChipValueForStack(totalAmount) {
                     Text("\(Int(totalAmount))")
@@ -172,16 +213,16 @@ struct ChipStackIndicator: View {
             }
         }
     }
-    
+
     private func getChipValueForStack(_ amount: Double) -> Double {
         let availableChips: [Double] = [500, 250, 100, 50, 25, 10, 5, 1]
-        
+
         for chipValue in availableChips {
             if amount >= chipValue {
                 return chipValue
             }
         }
-        
+
         return 1
     }
 }
@@ -193,20 +234,20 @@ struct ChipView_Previews: PreviewProvider {
             // Individual chips
             HStack {
                 ForEach([1.0, 5.0, 10.0, 25.0, 50.0], id: \.self) { value in
-                    ChipView(value: value, size: 32)
+                    ChipView(value: value, size: 40)
                 }
             }
-            
+
             // Chip stack
-            ChipStack(values: [100, 25, 5], size: 32)
-            
+            ChipStack(values: [100, 25, 5], size: 40)
+
             // Chip selector
             ChipSelectorView(selectedChipValue: .constant(25))
-            
+
             // Stack indicator
-            ChipStackIndicator(totalAmount: 75, chipSize: 40)
+            ChipStackIndicator(totalAmount: 75, chipSize: 50)
         }
         .padding()
         .background(AppTheme.background)
     }
-} 
+}

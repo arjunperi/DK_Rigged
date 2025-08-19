@@ -3,9 +3,9 @@ import SwiftUI
 struct CasinoView: View {
     @EnvironmentObject var appState: AppState
     @State private var selectedGame: String = "Roulette"
-    
+
     let casinoGames = ["Roulette", "Slots", "Blackjack", "Poker"]
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Compact header
@@ -13,9 +13,9 @@ struct CasinoView: View {
                 Text("Casino")
                     .font(AppTypography.title2)
                     .foregroundColor(AppTheme.text)
-                
+
                 Spacer()
-                
+
                 Text("Balance: $\(Int(appState.currentUser.balance))")
                     .font(AppTypography.headline)
                     .foregroundColor(AppTheme.casinoGold)
@@ -25,7 +25,7 @@ struct CasinoView: View {
             .padding(.horizontal, AppSpacing.md)
             .padding(.vertical, AppSpacing.xs)
             .background(AppTheme.surfaceBackground)
-            
+
             // Game content - roulette only for now
             if selectedGame == "Roulette" {
                 RouletteGameView()
@@ -44,20 +44,20 @@ struct RouletteGameView: View {
     @State private var showingResult = false
     @State private var lastResult: RouletteResult? = nil
     @State private var showingRiggedControls = false
-    
+
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
                 // Main roulette table
                 RouletteTableView()
-                
+
                 // Controls section
                 RouletteControlsView(onSpin: spinWheel)
                     .padding(.horizontal, AppSpacing.md)
                     .padding(.vertical, AppSpacing.sm)
                     .background(AppTheme.surfaceBackground)
             }
-            
+
             // Spinning wheel overlay
             if showingWheelAnimation {
                 RouletteWheelView(
@@ -66,7 +66,7 @@ struct RouletteGameView: View {
                 )
                 .transition(.opacity)
             }
-            
+
             // Result display overlay
             if showingResult, let result = lastResult {
                 ResultOverlayView(result: result, isShowing: $showingResult)
@@ -74,21 +74,21 @@ struct RouletteGameView: View {
             }
         }
     }
-    
+
     private func spinWheel() {
         // Clear previous results
         appState.clearBetResults()
-        
+
         // Start wheel animation
         withAnimation(.easeInOut(duration: 0.5)) {
             showingWheelAnimation = true
         }
-        
+
         // Perform the actual spin after a short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.lastResult = appState.spinRouletteAndRecord()
         }
-        
+
         // Show result after wheel animation completes (longer duration)
         DispatchQueue.main.asyncAfter(deadline: .now() + 9.5) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
@@ -102,9 +102,9 @@ struct RouletteGameView: View {
 struct RouletteControlsView: View {
     @EnvironmentObject var appState: AppState
     let onSpin: () -> Void
-    
+
     @State private var showingRiggedControls = false
-    
+
     var body: some View {
         VStack(spacing: AppSpacing.xs) {
             // Top row: Total bet and balance
@@ -119,9 +119,9 @@ struct RouletteControlsView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("Balance")
                         .font(AppTypography.caption)
@@ -133,7 +133,7 @@ struct RouletteControlsView: View {
                         .minimumScaleFactor(0.6)
                 }
             }
-            
+
             // Main control buttons
             HStack(spacing: AppSpacing.sm) {
                 // Double bet button
@@ -148,7 +148,7 @@ struct RouletteControlsView: View {
                         )
                 }
                 .disabled(totalBetAmount == 0 || totalBetAmount * 2 > appState.currentUser.balance)
-                
+
                 // Clear bets button
                 Button(action: clearAllBets) {
                     Text("CLEAR")
@@ -164,7 +164,7 @@ struct RouletteControlsView: View {
                         )
                 }
                 .disabled(totalBetAmount == 0)
-                
+
                 // Spin button
                 Button(action: onSpin) {
                     Text("SPIN")
@@ -175,21 +175,21 @@ struct RouletteControlsView: View {
                         .background(
                             RoundedRectangle(cornerRadius: AppCornerRadius.medium)
                                 .fill(
-                                    totalBetAmount > 0 ? 
+                                    totalBetAmount > 0 ?
                                     AppTheme.casinoGold : Color.gray
                                 )
                         )
                 }
                 .disabled(totalBetAmount == 0)
             }
-            
+
             // Hidden rigged controls toggle (discrete arrow)
             Button(action: { showingRiggedControls.toggle() }) {
                 Image(systemName: showingRiggedControls ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
                     .font(.system(size: 16))
                     .foregroundColor(AppTheme.secondaryText.opacity(0.6))
             }
-            
+
             // Rigged controls (collapsible)
             if showingRiggedControls {
                 RiggedControlsView()
@@ -197,7 +197,7 @@ struct RouletteControlsView: View {
             }
         }
     }
-    
+
     private var totalBetAmount: Double {
         return appState.bets
             .filter { bet in
@@ -208,7 +208,7 @@ struct RouletteControlsView: View {
             }
             .reduce(0) { $0 + $1.amount }
     }
-    
+
     private func doubleBets() {
         let currentBets = appState.bets.filter { bet in
             if case .roulette(_) = bet.type {
@@ -216,14 +216,14 @@ struct RouletteControlsView: View {
             }
             return false
         }
-        
+
         for bet in currentBets {
             if appState.currentUser.balance >= bet.amount {
                 appState.placeRouletteBet(betType: bet.type, amount: bet.amount)
             }
         }
     }
-    
+
     private func clearAllBets() {
         // Return bet amounts to balance
         let pendingBets = appState.bets.filter { bet in
@@ -232,10 +232,10 @@ struct RouletteControlsView: View {
             }
             return false
         }
-        
+
         let totalRefund = pendingBets.reduce(0) { $0 + $1.amount }
         appState.currentUser.balance += totalRefund
-        
+
         // Remove pending bets
         appState.bets.removeAll { bet in
             if case .roulette(_) = bet.type {
@@ -243,7 +243,7 @@ struct RouletteControlsView: View {
             }
             return false
         }
-        
+
         // Clear visual results
         appState.clearBetResults()
     }
@@ -254,7 +254,7 @@ struct RiggedControlsView: View {
     @EnvironmentObject var appState: AppState
     @State private var riggedNumber: String = ""
     @State private var selectedRiggedColor: RouletteColor? = nil
-    
+
     var body: some View {
         VStack(spacing: AppSpacing.xs) {
             HStack(spacing: AppSpacing.sm) {
@@ -263,19 +263,19 @@ struct RiggedControlsView: View {
                     Text("Number")
                         .font(AppTypography.caption2)
                         .foregroundColor(AppTheme.secondaryText)
-                    
+
                     TextField("0-36", text: $riggedNumber)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .keyboardType(.numberPad)
                         .frame(width: 60)
                 }
-                
+
                 // Rigged color selection
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Color")
                         .font(AppTypography.caption2)
                         .foregroundColor(AppTheme.secondaryText)
-                    
+
                     HStack(spacing: 4) {
                         ForEach([RouletteColor.red, RouletteColor.black, RouletteColor.green], id: \.self) { color in
                             Button(action: { selectedRiggedColor = color }) {
@@ -293,9 +293,9 @@ struct RiggedControlsView: View {
                         }
                     }
                 }
-                
+
                 Spacer()
-                
+
                 // Set/Clear buttons
                 VStack(spacing: 4) {
                     Button("Set") {
@@ -303,33 +303,33 @@ struct RiggedControlsView: View {
                     }
                     .buttonStyle(CasinoButtonStyle(isSelected: false))
                     .disabled(riggedNumber.isEmpty && selectedRiggedColor == nil)
-                    
+
                     Button("Clear") {
                         clearRiggedMode()
                     }
                     .buttonStyle(SecondaryButtonStyle())
                 }
             }
-            
+
             // Current rigged settings display
             if appState.isRiggedMode {
                 HStack {
                     Text("Active:")
                         .font(AppTypography.caption2)
                         .foregroundColor(AppTheme.secondaryText)
-                    
+
                     if let riggedNum = appState.selectedRiggedNumber {
                         Text("Number \(riggedNum)")
                             .font(AppTypography.caption2)
                             .foregroundColor(AppTheme.casinoGold)
                     }
-                    
+
                     if let riggedCol = appState.selectedRiggedColor {
                         Text(riggedCol.rawValue)
                             .font(AppTypography.caption2)
                             .foregroundColor(getColorForRouletteColor(riggedCol))
                     }
-                    
+
                     Spacer()
                 }
             }
@@ -340,7 +340,7 @@ struct RiggedControlsView: View {
                 .fill(AppTheme.surfaceBackground.opacity(0.5))
         )
     }
-    
+
     private func setRiggedMode() {
         if let number = Int(riggedNumber), number >= 0 && number <= 36 {
             if let color = selectedRiggedColor {
@@ -352,13 +352,13 @@ struct RiggedControlsView: View {
             appState.setRiggedColor(color)
         }
     }
-    
+
     private func clearRiggedMode() {
         appState.clearRiggedMode()
         riggedNumber = ""
         selectedRiggedColor = nil
     }
-    
+
     private func getColorForRouletteColor(_ color: RouletteColor) -> Color {
         switch color {
         case .red: return AppTheme.casinoRed
@@ -372,7 +372,7 @@ struct RiggedControlsView: View {
 struct ResultOverlayView: View {
     let result: RouletteResult
     @Binding var isShowing: Bool
-    
+
     var body: some View {
         ZStack {
             Color.black.opacity(0.8)
@@ -382,12 +382,12 @@ struct ResultOverlayView: View {
                         isShowing = false
                     }
                 }
-            
+
             VStack(spacing: AppSpacing.md) {
                 Text("Result")
                     .font(AppTypography.title)
                     .foregroundColor(AppTheme.text)
-                
+
                 // Winning number display
                 Text("\(result.number)")
                     .font(.system(size: 72, weight: .bold))
@@ -401,7 +401,7 @@ struct ResultOverlayView: View {
                                     .stroke(AppTheme.casinoGold, lineWidth: 4)
                             )
                     )
-                
+
                 Text(result.color.rawValue.uppercased())
                     .font(AppTypography.headline)
                     .foregroundColor(getColorForNumber(result.number))
@@ -415,7 +415,7 @@ struct ResultOverlayView: View {
                                     .stroke(getColorForNumber(result.number), lineWidth: 2)
                             )
                     )
-                
+
                 Button("Continue") {
                     withAnimation(.easeOut(duration: 0.3)) {
                         isShowing = false
@@ -431,7 +431,7 @@ struct ResultOverlayView: View {
             .padding(AppSpacing.xl)
         }
     }
-    
+
     private func getColorForNumber(_ number: Int) -> Color {
         switch number {
         case 0: return AppTheme.casinoGreen
@@ -446,21 +446,21 @@ struct ResultOverlayView: View {
 // MARK: - Coming Soon View
 struct ComingSoonView: View {
     let gameName: String
-    
+
     var body: some View {
         VStack(spacing: AppSpacing.lg) {
             Image(systemName: "gamecontroller")
                 .font(.system(size: 64))
                 .foregroundColor(AppTheme.secondaryText)
-            
+
             Text("\(gameName)")
                 .font(AppTypography.title)
                 .foregroundColor(AppTheme.text)
-            
+
             Text("Coming Soon")
                 .font(AppTypography.headline)
                 .foregroundColor(AppTheme.secondaryText)
-            
+
             Text("This game is currently under development. Stay tuned for updates!")
                 .font(AppTypography.body)
                 .foregroundColor(AppTheme.secondaryText)
@@ -478,4 +478,4 @@ struct CasinoView_Previews: PreviewProvider {
         CasinoView()
             .environmentObject(AppState())
     }
-} 
+}

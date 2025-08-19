@@ -132,7 +132,7 @@ struct SportsEventCard: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
+                .fill(Color.adaptiveBackground)
                 .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
         )
         .sheet(isPresented: $showingBettingOptions) {
@@ -246,7 +246,6 @@ struct SportsBettingOptionsView: View {
                     
                     TextField("Enter amount", text: $betAmount)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.decimalPad)
                         .padding(.horizontal)
                 }
                 
@@ -268,12 +267,6 @@ struct SportsBettingOptionsView: View {
                 Spacer()
             }
             .navigationTitle("Place Bet")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(
-                leading: Button("Cancel") {
-                    presentationMode.wrappedValue.dismiss()
-                }
-            )
         }
     }
     

@@ -1,5 +1,15 @@
 import SwiftUI
 
+extension Color {
+    static var adaptiveBackground: Color {
+        #if os(macOS)
+        return Color(NSColor.controlBackgroundColor)
+        #else
+        return Color(.systemBackground)
+        #endif
+    }
+}
+
 struct AccountView: View {
     @EnvironmentObject var appState: AppState
     @State private var showingAddFunds = false
@@ -64,7 +74,7 @@ struct UserProfileHeader: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
+                .fill(Color.adaptiveBackground)
                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
@@ -117,7 +127,7 @@ struct BalanceSection: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
+                .fill(Color.adaptiveBackground)
                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
         )
         .sheet(isPresented: $showingAddFunds) {
@@ -158,7 +168,7 @@ struct StatisticsSection: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
+                .fill(Color.adaptiveBackground)
                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
@@ -215,7 +225,7 @@ struct RecentActivitySection: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
+                .fill(Color.adaptiveBackground)
                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
@@ -292,7 +302,7 @@ struct SettingsSection: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
+                    .fill(Color.adaptiveBackground)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -302,7 +312,7 @@ struct SettingsSection: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
+                .fill(Color.adaptiveBackground)
                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
@@ -356,7 +366,6 @@ struct AddFundsSheet: View {
                     
                     TextField("Enter amount", text: $amount)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.decimalPad)
                 }
                 
                 // Quick amount buttons
@@ -386,12 +395,6 @@ struct AddFundsSheet: View {
             }
             .padding()
             .navigationTitle("Add Funds")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(
-                leading: Button("Cancel") {
-                    presentationMode.wrappedValue.dismiss()
-                }
-            )
         }
     }
     
