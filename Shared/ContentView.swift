@@ -38,6 +38,7 @@ struct ContentView: View {
         .environmentObject(appState)
         .accentColor(AppTheme.casinoBlue)
         .onAppear {
+            #if os(iOS)
             // Ensure tab bar is always visible with dark theme
             UITabBar.appearance().backgroundColor = UIColor.clear
             UITabBar.appearance().unselectedItemTintColor = UIColor(AppTheme.secondaryText)
@@ -75,6 +76,7 @@ struct ContentView: View {
             // Additional styling for better visibility
             UITabBar.appearance().barTintColor = UIColor.clear
             UITabBar.appearance().tintColor = UIColor(AppTheme.casinoBlue)
+            #endif
         }
         .overlay(
             // Clean tab bar without borders
@@ -85,12 +87,14 @@ struct ContentView: View {
         )
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .preferredColorScheme(.dark)
+        #if os(iOS)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             // Ensure tab bar styling is maintained when app becomes active
             UITabBar.appearance().backgroundColor = UIColor.clear
             UITabBar.appearance().barTintColor = UIColor.clear
             UITabBar.appearance().tintColor = UIColor(AppTheme.casinoBlue)
         }
+        #endif
     }
 }
 

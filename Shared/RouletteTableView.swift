@@ -110,8 +110,8 @@ struct RouletteTableView: View {
                         cellSize: calculateCellSize(for: geometry.size),
                         narrowCellSize: calculateNarrowCellSize(for: geometry.size)
                     )
-                    .padding(.horizontal, 16) // Equal small margins
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, AppSpacing.md) // Apple-style consistent margins
+                    .padding(.vertical, AppSpacing.sm)
 
                     // Chip selection below the table
                     HStack(spacing: AppSpacing.sm) {
@@ -191,7 +191,7 @@ struct RouletteTable: View {
                 RoundedRectangle(cornerRadius: AppCornerRadius.small)
                     .stroke(AppTheme.border, lineWidth: 2) // Stronger border like DK
             )
-            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+            .shadow(color: AppShadows.cardShadow.color, radius: AppShadows.cardShadow.radius, x: AppShadows.cardShadow.x, y: AppShadows.cardShadow.y)
         }
     }
 }
@@ -248,12 +248,12 @@ struct StyledZeroBettingArea: View {
                     Pentagon()
                         .stroke(AppTheme.border, lineWidth: 3)
                 )
-                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
+                .shadow(color: AppShadows.subtle, radius: 2, x: 0, y: 1)
 
             VStack(spacing: 2) {
                 // Zero text
                 Text(title)
-                    .font(.system(size: min(cellSize.width * 0.35, 15), weight: .bold))
+                    .font(.custom("Bodoni 72", size: min(cellSize.width * 0.35, 15), relativeTo: .body).weight(.bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
@@ -513,7 +513,7 @@ struct ModernBettingArea: View {
             VStack(spacing: 2) {
                 // Text - horizontally centered
                 Text(title)
-                    .font(.system(size: min(cellSize.width * 0.35, 15), weight: .bold)) // Smaller font for better fit
+                    .font(.custom("Bodoni 72", size: min(cellSize.width * 0.35, 15), relativeTo: .body).weight(.bold)) // Bold elegant casino font
                     .foregroundColor(textColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -690,7 +690,7 @@ struct BettingArea: View {
             VStack(spacing: 2) {
                 // Area title
                 Text(title)
-                    .font(.system(size: min(cellSize.width * 0.35, 15), weight: .bold))
+                    .font(.custom("Bodoni 72", size: min(cellSize.width * 0.35, 15), relativeTo: .body).weight(.bold))
                     .foregroundColor(textColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -707,7 +707,7 @@ struct BettingArea: View {
                 .stroke(AppTheme.border, lineWidth: 2)
         }
         .clipShape(RoundedRectangle(cornerRadius: 4))
-        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
+        .shadow(color: AppShadows.subtle, radius: 2, x: 0, y: 1)
             .onTapGesture {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                     placeBet(betKey: betKey)

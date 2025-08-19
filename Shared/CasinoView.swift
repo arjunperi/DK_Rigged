@@ -165,6 +165,22 @@ struct RouletteControlsView: View {
                 }
                 .disabled(totalBetAmount == 0)
 
+                // Undo last bet button
+                Button(action: undoLastBet) {
+                    Text("UNDO")
+                        .font(AppTypography.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(minWidth: 60, minHeight: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                .fill(canUndo ? AppTheme.casinoBlue : Color.gray)
+                        )
+                }
+                .disabled(!canUndo)
+
                 // Spin button
                 Button(action: onSpin) {
                     Text("SPIN")
@@ -208,6 +224,15 @@ struct RouletteControlsView: View {
             }
             .reduce(0) { $0 + $1.amount }
     }
+    
+    private var canUndo: Bool {
+        return appState.bets.contains { bet in
+            if case .roulette(_) = bet.type {
+                return bet.outcome == .pending
+            }
+            return false
+        }
+    }
 
     private func doubleBets() {
         let currentBets = appState.bets.filter { bet in
@@ -247,6 +272,10 @@ struct RouletteControlsView: View {
         // Clear visual results
         appState.clearBetResults()
     }
+    
+    private func undoLastBet() {
+        _ = appState.undoLastBet()
+    }
 }
 
 // MARK: - Rigged Controls
@@ -266,7 +295,9 @@ struct RiggedControlsView: View {
 
                     TextField("0-36", text: $riggedNumber)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                        #if os(iOS)
                         .keyboardType(.numberPad)
+                        #endif
                         .frame(width: 60)
                 }
 

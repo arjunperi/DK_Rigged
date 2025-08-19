@@ -66,7 +66,7 @@ struct ChipView: View {
                 .shadow(color: .black.opacity(0.8), radius: 1, x: 0, y: 1)
         }
         .scaleEffect(isAnimating ? 1.1 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isAnimating)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isAnimating)
         .onAppear {
             isAnimating = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -174,7 +174,7 @@ struct ChipSelectorButton: View {
                         .frame(width: 44, height: 44)
                 )
                 .scaleEffect(isPressed ? 0.9 : 1.0)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
         }
         .buttonStyle(PlainButtonStyle())
         .onTapGesture {

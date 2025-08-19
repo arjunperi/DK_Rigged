@@ -330,6 +330,28 @@ class AppState: ObservableObject {
         currentUser.totalWagered += amount
     }
     
+    func undoLastBet() -> Bool {
+        // Find the last pending roulette bet
+        if let lastBetIndex = bets.lastIndex(where: { bet in
+            if case .roulette(_) = bet.type {
+                return bet.outcome == .pending
+            }
+            return false
+        }) {
+            let lastBet = bets[lastBetIndex]
+            
+            // Return the bet amount to balance
+            currentUser.balance += lastBet.amount
+            currentUser.totalWagered -= lastBet.amount
+            
+            // Remove the bet
+            bets.remove(at: lastBetIndex)
+            
+            return true
+        }
+        return false
+    }
+    
     func spinRouletteAndRecord() -> RouletteResult {
         let result = spinRoulette()
         
