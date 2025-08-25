@@ -15,6 +15,8 @@ struct CasinoView: View {
                     .foregroundColor(AppTheme.text)
 
                 Spacer()
+                
+
 
                 Text("Balance: $\(Int(appState.currentUser.balance))")
                     .font(AppTypography.headline)
@@ -69,7 +71,7 @@ struct RouletteGameView: View {
 
             // Result display overlay
             if showingResult, let result = lastResult {
-                ResultOverlayView(result: result, isShowing: $showingResult)
+                ResultOverlayView(result: result, bets: appState.bets, isShowing: $showingResult)
                     .transition(.scale.combined(with: .opacity))
             }
         }
@@ -84,13 +86,18 @@ struct RouletteGameView: View {
             showingWheelAnimation = true
         }
 
-        // Perform the actual spin after a short delay
+        // Perform the actual spin after a short delay (but don't process bets yet)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.lastResult = appState.spinRouletteAndRecord()
+            self.lastResult = appState.spinRouletteWithoutProcessingBets()
         }
 
-        // Show result after wheel animation completes (longer duration)
+        // Show result and process bets after wheel animation completes
         DispatchQueue.main.asyncAfter(deadline: .now() + 9.5) {
+            // Process the bets and update balance only now
+            if let result = self.lastResult {
+                appState.processRouletteBetsForResult(result)
+            }
+            
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 self.showingResult = true
             }
@@ -165,22 +172,6 @@ struct RouletteControlsView: View {
                 }
                 .disabled(totalBetAmount == 0)
 
-                // Undo last bet button
-                Button(action: undoLastBet) {
-                    Text("UNDO")
-                        .font(AppTypography.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .frame(minWidth: 60, minHeight: 44)
-                        .background(
-                            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
-                                .fill(canUndo ? AppTheme.casinoBlue : Color.gray)
-                        )
-                }
-                .disabled(!canUndo)
-
                 // Spin button
                 Button(action: onSpin) {
                     Text("SPIN")
@@ -224,15 +215,6 @@ struct RouletteControlsView: View {
             }
             .reduce(0) { $0 + $1.amount }
     }
-    
-    private var canUndo: Bool {
-        return appState.bets.contains { bet in
-            if case .roulette(_) = bet.type {
-                return bet.outcome == .pending
-            }
-            return false
-        }
-    }
 
     private func doubleBets() {
         let currentBets = appState.bets.filter { bet in
@@ -272,10 +254,6 @@ struct RouletteControlsView: View {
         // Clear visual results
         appState.clearBetResults()
     }
-    
-    private func undoLastBet() {
-        _ = appState.undoLastBet()
-    }
 }
 
 // MARK: - Rigged Controls
@@ -295,9 +273,6 @@ struct RiggedControlsView: View {
 
                     TextField("0-36", text: $riggedNumber)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                        #if os(iOS)
-                        .keyboardType(.numberPad)
-                        #endif
                         .frame(width: 60)
                 }
 
@@ -402,7 +377,16 @@ struct RiggedControlsView: View {
 // MARK: - Result Overlay
 struct ResultOverlayView: View {
     let result: RouletteResult
+    let bets: [Bet]
     @Binding var isShowing: Bool
+    
+    private var totalWinnings: Double {
+        bets.filter { $0.outcome == .won }.reduce(0) { $0 + $1.payout }
+    }
+    
+    private var hasWinningBets: Bool {
+        bets.contains { $0.outcome == .won }
+    }
 
     var body: some View {
         ZStack {
@@ -446,6 +430,48 @@ struct ResultOverlayView: View {
                                     .stroke(getColorForNumber(result.number), lineWidth: 2)
                             )
                     )
+                
+                // Winner display
+                if hasWinningBets {
+                    VStack(spacing: AppSpacing.xs) {
+                        Text("🎉 WINNER! 🎉")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(AppTheme.casinoGold)
+                            .padding(.top, AppSpacing.sm)
+                        
+                        Text("You won:")
+                            .font(AppTypography.body)
+                            .foregroundColor(AppTheme.secondaryText)
+                        
+                        Text("$\(Int(totalWinnings))")
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundColor(AppTheme.casinoGold)
+                            .padding(.horizontal, AppSpacing.md)
+                            .padding(.vertical, AppSpacing.xs)
+                            .background(
+                                RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                    .fill(AppTheme.casinoGold.opacity(0.2))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                            .stroke(AppTheme.casinoGold, lineWidth: 2)
+                                    )
+                            )
+                    }
+                } else {
+                    VStack(spacing: AppSpacing.xs) {
+                        Text("Better luck next time!")
+                            .font(AppTypography.headline)
+                            .foregroundColor(AppTheme.secondaryText)
+                            .padding(.top, AppSpacing.sm)
+                        
+                        let totalWagered = bets.reduce(0) { $0 + $1.amount }
+                        if totalWagered > 0 {
+                            Text("You wagered: $\(Int(totalWagered))")
+                                .font(AppTypography.body)
+                                .foregroundColor(AppTheme.secondaryText)
+                        }
+                    }
+                }
 
                 Button("Continue") {
                     withAnimation(.easeOut(duration: 0.3)) {

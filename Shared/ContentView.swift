@@ -34,6 +34,8 @@ struct ContentView: View {
                     Text("Account")
                 }
                 .tag(2)
+            
+
         }
         .environmentObject(appState)
         .accentColor(AppTheme.casinoBlue)

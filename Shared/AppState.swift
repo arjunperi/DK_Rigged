@@ -153,7 +153,7 @@ class AppState: ObservableObject {
         }
     }
     
-    private func processRouletteBets(_ result: RouletteResult) {
+    func processRouletteBets(_ result: RouletteResult) {
         let pendingBets = bets.filter { $0.outcome == .pending && $0.type.isRoulette }
         
         for bet in pendingBets {
@@ -361,6 +361,9 @@ class AppState: ObservableObject {
         game.isComplete = true
         gameHistory.append(game)
         
+        // Process bets immediately (for backward compatibility)
+        processRouletteBets(result)
+        
         // Reset rigged mode
         if isRiggedMode {
             isRiggedMode = false
@@ -369,6 +372,30 @@ class AppState: ObservableObject {
         }
         
         return result
+    }
+    
+    func spinRouletteWithoutProcessingBets() -> RouletteResult {
+        let result = spinRoulette()
+        
+        // Create a new roulette game for history
+        let game = RouletteGame()
+        game.winningNumber = result.number
+        game.isComplete = true
+        gameHistory.append(game)
+        
+        // Reset rigged mode
+        if isRiggedMode {
+            isRiggedMode = false
+            selectedRiggedNumber = nil
+            selectedRiggedColor = nil
+        }
+        
+        return result
+    }
+    
+    func processRouletteBetsForResult(_ result: RouletteResult) {
+        // Process the bets and update balance
+        processRouletteBets(result)
     }
 }
 
