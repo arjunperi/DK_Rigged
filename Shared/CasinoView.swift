@@ -283,7 +283,7 @@ struct RiggedControlsView: View {
                         .foregroundColor(AppTheme.secondaryText)
 
                     HStack(spacing: 4) {
-                        ForEach([RouletteColor.red, RouletteColor.black, RouletteColor.green], id: \.self) { color in
+                        ForEach([RouletteColor.red, RouletteColor.black], id: \.self) { color in
                             Button(action: { selectedRiggedColor = color }) {
                                 Circle()
                                     .fill(getColorForRouletteColor(color))

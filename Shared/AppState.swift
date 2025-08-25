@@ -124,8 +124,8 @@ class AppState: ObservableObject {
         let result = RouletteResult(number: number, color: color, timestamp: Date())
         rouletteHistory.append(result)
         
-        // Process any pending bets
-        processRouletteBets(result)
+        // Don't process bets here - let the caller decide when to process them
+        // This prevents double processing and allows for proper timing control
         
         return result
     }
@@ -168,7 +168,12 @@ class AppState: ObservableObject {
             switch rouletteType {
             case .singleNumber(let number):
                 if result.number == number {
-                    return (.won, bet.amount * 36.0)
+                    // Green numbers (0 and 00) pay 35:1, all others pay 36:1
+                    if number == 0 || number == 37 {
+                        return (.won, bet.amount * 35.0)
+                    } else {
+                        return (.won, bet.amount * 36.0)
+                    }
                 } else {
                     return (.lost, 0.0)
                 }
@@ -396,6 +401,10 @@ class AppState: ObservableObject {
     func processRouletteBetsForResult(_ result: RouletteResult) {
         // Process the bets and update balance
         processRouletteBets(result)
+        
+        // Clear the processed bets to prevent them from affecting future spins
+        // This ensures that old bets don't interfere with new games
+        clearBetResults()
     }
 }
 

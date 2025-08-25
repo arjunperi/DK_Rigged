@@ -253,7 +253,7 @@ struct StyledZeroBettingArea: View {
             VStack(spacing: 2) {
                 // Zero text
                 Text(title)
-                    .font(.system(size: min(cellSize.width * 0.35, 15), weight: .bold))
+                    .font(.system(size: min(cellSize.width * 0.35, 15), weight: .bold, design: .serif))
                     .foregroundColor(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
@@ -513,7 +513,7 @@ struct ModernBettingArea: View {
             VStack(spacing: 2) {
                 // Text - horizontally centered
                 Text(title)
-                    .font(.system(size: min(cellSize.width * 0.35, 15), weight: .bold)) // Smaller font for better fit
+                    .font(.system(size: min(cellSize.width * 0.35, 15), weight: .bold, design: .serif)) // Smaller font for better fit
                     .foregroundColor(textColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -690,7 +690,7 @@ struct BettingArea: View {
             VStack(spacing: 2) {
                 // Area title
                 Text(title)
-                    .font(.system(size: min(cellSize.width * 0.35, 15), weight: .bold))
+                    .font(.system(size: min(cellSize.width * 0.35, 15), weight: .bold, design: .serif))
                     .foregroundColor(textColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
