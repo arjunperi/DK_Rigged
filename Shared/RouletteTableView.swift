@@ -98,6 +98,8 @@ struct RouletteTableView: View {
     @EnvironmentObject var appState: AppState
     @State private var selectedChipValue: Double = 25
     @State private var placedBets: [String: Double] = [:]
+    @State private var blackRigActive: Bool = false
+    @State private var redRigActive: Bool = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -116,16 +118,101 @@ struct RouletteTableView: View {
                     // Chip selection below the table
                     HStack(spacing: AppSpacing.sm) {
                         ForEach([1.0, 5.0, 10.0, 25.0, 50.0, 100.0], id: \.self) { chipValue in
-                            ChipSelectorButton(
-                                value: chipValue,
-                                isSelected: selectedChipValue == chipValue
-                            ) {
-                                selectedChipValue = chipValue
+                            ZStack {
+                                ChipSelectorButton(
+                                    value: chipValue,
+                                    isSelected: selectedChipValue == chipValue
+                                ) {
+                                    selectedChipValue = chipValue
+                                }
+                                
+                                // Invisible rig control buttons
+                                if chipValue == 1.0 {
+                                    // Black rig toggle button (next to white 1 chip)
+                                    Button(action: toggleBlackRig) {
+                                        Rectangle()
+                                            .fill(blackRigActive ? Color.black : Color.blue) // Show active state
+                                            .frame(width: 25, height: 25) // Larger size
+                                            .overlay(
+                                                Text(blackRigActive ? "ON" : "B")
+                                                    .font(.system(size: 10, weight: .bold))
+                                                    .foregroundColor(.white)
+                                            )
+                                    }
+                                    .offset(x: 35, y: 0) // Position further to the right
+                                    
+                                    // Black rig status indicator
+                                    if blackRigActive {
+                                        Circle()
+                                            .fill(Color.black)
+                                            .frame(width: 10, height: 10)
+                                            .offset(x: 45, y: -20)
+                                    }
+                                }
+                                
+                                if chipValue == 100.0 {
+                                    // Red rig toggle button (next to black 100 chip)
+                                    Button(action: toggleRedRig) {
+                                        Rectangle()
+                                            .fill(redRigActive ? Color.red : Color.red.opacity(0.7)) // Show active state
+                                            .frame(width: 25, height: 25) // Larger size
+                                            .overlay(
+                                                Text(redRigActive ? "ON" : "R")
+                                                    .font(.system(size: 10, weight: .bold))
+                                                    .foregroundColor(.white)
+                                            )
+                                    }
+                                    .offset(x: 35, y: 0) // Position further to the right
+                                    
+                                    // Red rig status indicator
+                                    if redRigActive {
+                                        Circle()
+                                            .fill(Color.red)
+                                            .frame(width: 10, height: 10)
+                                            .offset(x: 45, y: -20)
+                                    }
+                                }
                             }
                         }
                     }
                     .padding(.horizontal, AppSpacing.md)
                     .padding(.vertical, AppSpacing.sm)
+                    
+                    // Rig status display
+                    if blackRigActive || redRigActive {
+                        HStack(spacing: AppSpacing.sm) {
+                            if blackRigActive {
+                                HStack(spacing: 4) {
+                                    Circle()
+                                        .fill(Color.black)
+                                        .frame(width: 12, height: 12)
+                                    Text("BLACK RIG ACTIVE")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.black.opacity(0.8))
+                                .cornerRadius(4)
+                            }
+                            
+                            if redRigActive {
+                                HStack(spacing: 4) {
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 12, height: 12)
+                                    Text("RED RIG ACTIVE")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.red.opacity(0.8))
+                                .cornerRadius(4)
+                            }
+                        }
+                        .padding(.top, 8)
+                    }
                     
                     // Add more space before the controls section to prevent overlap
                     Spacer()
@@ -156,6 +243,35 @@ struct RouletteTableView: View {
         let cellHeight = min(tableHeight / 14, 55) // Increased cell height for bigger chips
 
         return CGSize(width: narrowWidth, height: cellHeight)
+    }
+    
+    // MARK: - Rig Control Functions
+    private func toggleBlackRig() {
+        if blackRigActive {
+            // Turn off black rig
+            blackRigActive = false
+            redRigActive = false
+            appState.clearRiggedMode()
+        } else {
+            // Turn on black rig, turn off red rig
+            blackRigActive = true
+            redRigActive = false
+            appState.setRiggedColor(.black)
+        }
+    }
+    
+    private func toggleRedRig() {
+        if redRigActive {
+            // Turn off red rig
+            redRigActive = false
+            blackRigActive = false
+            appState.clearRiggedMode()
+        } else {
+            // Turn on red rig, turn off black rig
+            redRigActive = true
+            blackRigActive = false
+            appState.setRiggedColor(.red)
+        }
     }
 }
 

@@ -315,6 +315,15 @@ class AppState: ObservableObject {
         isRiggedMode = false
     }
     
+    // MARK: - Rig Status
+    func getCurrentRigStatus() -> (color: RouletteColor?, number: Int?) {
+        return (selectedRiggedColor, selectedRiggedNumber)
+    }
+    
+    func isRigActive() -> Bool {
+        return isRiggedMode
+    }
+    
     func clearBetResults() {
         // Reset all bets to pending status for a fresh spin
         for i in 0..<bets.count {
@@ -369,7 +378,7 @@ class AppState: ObservableObject {
         // Process bets immediately (for backward compatibility)
         processRouletteBets(result)
         
-        // Reset rigged mode
+        // Reset rigged mode after processing bets
         if isRiggedMode {
             isRiggedMode = false
             selectedRiggedNumber = nil
@@ -388,12 +397,8 @@ class AppState: ObservableObject {
         game.isComplete = true
         gameHistory.append(game)
         
-        // Reset rigged mode
-        if isRiggedMode {
-            isRiggedMode = false
-            selectedRiggedNumber = nil
-            selectedRiggedColor = nil
-        }
+        // Don't reset rigged mode here - let it persist until after results are shown
+        // The rig will be cleared in processRouletteBetsForResult after the user sees the results
         
         return result
     }
@@ -405,6 +410,13 @@ class AppState: ObservableObject {
         // Clear the processed bets to prevent them from affecting future spins
         // This ensures that old bets don't interfere with new games
         clearBetResults()
+        
+        // Now clear the rigged mode after the user has seen the results
+        if isRiggedMode {
+            isRiggedMode = false
+            selectedRiggedNumber = nil
+            selectedRiggedColor = nil
+        }
     }
 }
 
