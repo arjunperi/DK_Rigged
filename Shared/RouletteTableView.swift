@@ -220,6 +220,12 @@ struct RouletteTableView: View {
                 }
             }
         }
+        .onReceive(appState.$bets) { newBets in
+            // Clear placedBets when AppState bets are cleared
+            if newBets.isEmpty && !placedBets.isEmpty {
+                placedBets.removeAll()
+            }
+        }
     }
 
     private func calculateCellSize(for size: CGSize) -> CGSize {

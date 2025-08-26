@@ -64,7 +64,12 @@ struct RouletteGameView: View {
             if showingWheelAnimation {
                 RouletteWheelView(
                     isSpinning: $showingWheelAnimation,
-                    result: $lastResult
+                    result: $lastResult,
+                    onAnimationComplete: {
+                        // Clear rigged mode after wheel animation completes
+                        appState.clearRiggedModeAfterAnimation()
+                    },
+                    riggedNumber: appState.selectedRiggedNumber // Pass the rigged number
                 )
                 .transition(.opacity)
             }
@@ -88,7 +93,14 @@ struct RouletteGameView: View {
 
         // Perform the actual spin after a short delay (but don't process bets yet)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.lastResult = appState.spinRouletteWithoutProcessingBets()
+            // If we have a rigged number, create a result with that number
+            if let riggedNumber = appState.selectedRiggedNumber {
+                let riggedColor = appState.getColorForNumber(riggedNumber)
+                self.lastResult = RouletteResult(number: riggedNumber, color: riggedColor, timestamp: Date())
+            } else {
+                // Otherwise, use the normal random spin
+                self.lastResult = appState.spinRouletteWithoutProcessingBets()
+            }
         }
 
         // Show result and process bets after wheel animation completes

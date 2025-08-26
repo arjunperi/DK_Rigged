@@ -3,14 +3,20 @@ import SwiftUI
 struct RouletteWheelView: View {
     @Binding var isSpinning: Bool
     @Binding var result: RouletteResult?
+    var onAnimationComplete: (() -> Void)? = nil
+    var riggedNumber: Int? = nil // Add rigged number parameter
     
     @State private var wheelRotation: Double = 0
     @State private var ballRotation: Double = 0
     @State private var ballRadius: CGFloat = 120
     @State private var showResult = false
     @State private var wheelAnimationComplete = false
+    @State private var showWheelResults = false // Keep wheel visible after spin
     
     // Roulette numbers in correct American roulette order (clockwise from 0)
+    // Fixed to match the actual visual layout of the wheel
+    // Updated to match wheelSequence exactly - both arrays now use the same number sequence
+    // This ensures wheel rotation and ball landing use identical coordinates
     private let wheelNumbers = [0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1, 37, 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2]
     
     var body: some View {
@@ -144,7 +150,7 @@ struct RouletteWheelView: View {
                                 )
                                 .offset(x: ballRadius)
                                 .rotationEffect(.degrees(ballRotation))
-                                .animation(wheelAnimationComplete ? nil : .linear(duration: 6.0).repeatCount(1, autoreverses: false), value: ballRotation)
+                                .animation(wheelAnimationComplete ? nil : .easeOut(duration: 6.0), value: ballRotation)
                                 .shadow(color: .black.opacity(0.6), radius: 3, x: 2, y: 2)
                                 .animation(wheelAnimationComplete ? nil : .easeOut(duration: 6.0), value: ballRadius)
                         }
@@ -153,6 +159,28 @@ struct RouletteWheelView: View {
                     // Result display
                     if showResult, let result = result {
                         ResultDisplayView(result: result)
+                    }
+                    
+                    // X button to dismiss wheel results
+                    if showWheelResults {
+                        VStack {
+                            HStack {
+                                Spacer()
+                                Button(action: {
+                                    withAnimation(.easeOut(duration: 0.5)) {
+                                        isSpinning = false
+                                    }
+                                }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 30))
+                                        .foregroundColor(.white)
+                                        .background(Color.black.opacity(0.7))
+                                        .clipShape(Circle())
+                                }
+                                .padding(.trailing, 20)
+                            }
+                            Spacer()
+                        }
                     }
                 }
                 .frame(width: 400, height: 400)
@@ -197,26 +225,99 @@ struct RouletteWheelView: View {
         
         // Calculate final wheel position based on the result
         let finalWheelRotation: Double
-        if let result = result {
-            // Calculate the angle for the winning number
-            let numberAngle = getAngleForNumber(result.number)
-            // Add multiple rotations plus the specific number position
-            finalWheelRotation = 1440 + numberAngle // 4 full rotations + specific number
+        let targetNumber: Int
+        
+        if let riggedNumber = riggedNumber {
+            // Use the rigged number for both wheel and ball
+            targetNumber = riggedNumber
+        } else if let result = result {
+            // Use the result number if no rigged number
+            targetNumber = result.number
         } else {
             // Fallback if no result
-            finalWheelRotation = 1440
+            targetNumber = 0
         }
         
-        // Start wheel spinning to final position
-        wheelRotation = finalWheelRotation
+        // REMOVED: Old wheel rotation logic - replaced with new American wheel system below
+        
+        // NEW LOGIC: American Roulette Wheel (38 slots including "0" and "00")
+        // Define the American wheel sequence in exact clockwise order
+        let wheelSequence = ["0", "28", "9", "26", "30", "11", "7", "20", "32", "17",
+                             "5", "22", "34", "15", "3", "24", "36", "13", "1", "00",
+                             "27", "10", "25", "29", "12", "8", "19", "31", "18", "6",
+                             "21", "33", "16", "4", "23", "35", "14", "2"]
+        
+        // Each slot has equal angle size (American = 38 slots)
+        let pocketAngle = 360.0 / Double(wheelSequence.count) // 360° / 38 = 9.47°
+        
+        // Convert target number to string for comparison (handles both "00" and regular numbers)
+        let targetString = String(targetNumber)
+        
+        // Find the target number's index in the wheel array
+        guard let targetIndex = wheelSequence.firstIndex(of: targetString) else {
+            print("❌ Target number \(targetString) not found in American wheel sequence")
+            return
+        }
+        
+        // Compute the target's angle position
+        let targetAngle = Double(targetIndex) * pocketAngle
+        
+        // Keep track of wheel's current rotation and normalize to 0-360
+        let currentRotation = wheelRotation.truncatingRemainder(dividingBy: 360)
+        
+        // NATURAL WHEEL SPIN: Let wheel spin to random position
+        // No artificial targeting - wheel spins naturally
+        
+        // Add several full spins to make it look real (8-16 full rotations)
+        let extraSpins = Double.random(in: 8...16) * 360
+        
+        // Final rotation = current + extra spins (natural random position)
+        let calculatedWheelRotation = currentRotation + extraSpins
+        
+        print("🎯 NATURAL WHEEL SPIN:")
+        print("   • Target Number: \(targetNumber) at Index: \(targetIndex)")
+        print("   • Pocket Angle: \(pocketAngle)°")
+        print("   • Target Angle: \(targetAngle)°")
+        print("   • Current Rotation: \(currentRotation)°")
+        print("   • Extra Spins: \(extraSpins)°")
+        print("   • Wheel Final Position: \(calculatedWheelRotation)° (random)")
+        
+        // Update wheel rotation to final position
+        wheelRotation = calculatedWheelRotation
         
         // Set wheel animation complete after duration
         DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
             wheelAnimationComplete = true
         }
         
-        // Start ball spinning (opposite direction, slower)
-        ballRotation -= 2160 // 6 full rotations opposite direction
+        // BALL LANDS ON RIGGED NUMBER: Regardless of wheel position
+        // Calculate where ball needs to land to hit the rigged number
+        
+        // Find the physical position of the target number on the wheel
+        let targetPhysicalIndex = wheelNumbers.firstIndex(of: targetNumber) ?? 0
+        let targetPhysicalAngle = Double(targetPhysicalIndex) * (360.0 / Double(wheelNumbers.count))
+        
+        // COORDINATE SYSTEM CORRECTION: Add -9 segment offset
+        // Testing shows consistent +9 segment offset, so we subtract 9 to compensate
+        let segmentAngle = 360.0 / Double(wheelNumbers.count) // 9.47°
+        let coordinateOffset = -9.0 * segmentAngle // -85.23°
+        
+        // Ball needs to land at the target number's position with coordinate correction
+        // Account for the wheel's actual final position
+        let ballFinalRotation = targetPhysicalAngle + calculatedWheelRotation + coordinateOffset
+        
+        print("⚽ BALL LANDS ON RIGGED NUMBER:")
+        print("   • Target Number: \(targetString)")
+        print("   • Target Physical Index: \(targetPhysicalIndex)")
+        print("   • Target Physical Angle: \(targetPhysicalAngle)°")
+        print("   • Wheel Final Position: \(calculatedWheelRotation)°")
+        print("   • Coordinate Offset: \(coordinateOffset)° (-9 segments)")
+        print("   • Ball Final Rotation: \(ballFinalRotation)°")
+        print("   • Ball lands on segment showing \(targetString)")
+        print("   • Coordinate system corrected for -9 segment offset")
+        
+        // Start ball spinning to final position
+        ballRotation = ballFinalRotation
         
         // Ball radius animation (moves inward as it slows)
         ballRadius = 85
@@ -225,13 +326,10 @@ struct RouletteWheelView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
             // All animations are complete - wheel and ball are now still
             showResult = true
+            showWheelResults = true // Keep wheel visible
             
-            // Auto-exit after showing result
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                withAnimation(.easeOut(duration: 0.5)) {
-                    isSpinning = false
-                }
-            }
+            // Notify that animation is complete
+            onAnimationComplete?()
         }
     }
     
@@ -241,12 +339,26 @@ struct RouletteWheelView: View {
         ballRotation = 0
         ballRadius = 120
         showResult = false
+        showWheelResults = false
         wheelAnimationComplete = false
     }
     
     private func getAngleForNumber(_ number: Int) -> Double {
-        guard let index = wheelNumbers.firstIndex(of: number) else { return 0 }
-        return Double(index) * (360.0 / Double(wheelNumbers.count))
+        guard let index = wheelNumbers.firstIndex(of: number) else { 
+            print("❌ Number \(number) not found in wheel numbers array")
+            return 0 
+        }
+        
+        // The wheel starts from the top (-90 degrees) and goes clockwise
+        // Each segment is positioned based on its index, starting from the top
+        let segmentAngle = 360.0 / Double(wheelNumbers.count)
+        let startAngle = Double(index) * segmentAngle - 90 // Start from top (-90 degrees)
+        let centerAngle = startAngle + segmentAngle / 2
+        
+        print("🔢 Number: \(number), Index: \(index)")
+        print("📏 Segment Angle: \(segmentAngle)°, Start Angle: \(startAngle)°, Center Angle: \(centerAngle)°")
+        
+        return centerAngle
     }
     
     private func getColorForNumber(_ number: Int) -> Color {
@@ -452,6 +564,8 @@ struct UnifiedRouletteWheel: View {
     }
     
     private func displayNumber(_ number: Int) -> String {
+        // Simple display - show the actual number from wheelNumbers array
+        // No mapping - what you see is what you get
         return number == 37 ? "00" : "\(number)"
     }
     

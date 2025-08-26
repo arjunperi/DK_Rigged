@@ -111,10 +111,8 @@ class AppState: ObservableObject {
                 color = getColorForNumber(number)
             }
             
-            // Reset rigged mode after use
-            isRiggedMode = false
-            selectedRiggedNumber = nil
-            selectedRiggedColor = nil
+            // Don't reset rigged mode here - let it persist until after results are shown
+            // The rig will be cleared in processRouletteBetsForResult after the user sees the results
         } else {
             // Random spin
             number = Int.random(in: 0...37) // Include 00 (37) for American roulette
@@ -130,7 +128,7 @@ class AppState: ObservableObject {
         return result
     }
     
-    private func getColorForNumber(_ number: Int) -> RouletteColor {
+    public func getColorForNumber(_ number: Int) -> RouletteColor {
         if number == 0 || number == 37 { // 0 and 00 (37) are green
             return .green
         }
@@ -332,6 +330,14 @@ class AppState: ObservableObject {
         }
     }
     
+    func clearAllBets() {
+        // Remove all bets completely for a fresh game
+        bets.removeAll()
+        
+        // Notify observers that bets have been cleared
+        objectWillChange.send()
+    }
+    
     // MARK: - Roulette Game Management
     func placeRouletteBet(betType: BetType, amount: Double) {
         guard amount <= currentUser.balance else { return }
@@ -407,11 +413,15 @@ class AppState: ObservableObject {
         // Process the bets and update balance
         processRouletteBets(result)
         
-        // Clear the processed bets to prevent them from affecting future spins
-        // This ensures that old bets don't interfere with new games
-        clearBetResults()
+        // Clear all bets completely for a fresh game
+        clearAllBets()
         
-        // Now clear the rigged mode after the user has seen the results
+        // Don't clear rigged mode here - it will be cleared after the wheel animation completes
+        // This ensures the rig stays active for the entire wheel animation
+    }
+    
+    func clearRiggedModeAfterAnimation() {
+        // Clear the rigged mode after the wheel animation is complete
         if isRiggedMode {
             isRiggedMode = false
             selectedRiggedNumber = nil
