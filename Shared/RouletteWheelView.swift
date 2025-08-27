@@ -290,34 +290,32 @@ struct RouletteWheelView: View {
             wheelAnimationComplete = true
         }
         
-        // BALL LANDS ON RIGGED NUMBER: Regardless of wheel position
-        // Calculate where ball needs to land to hit the rigged number
+        // SYNCHRONIZED BALL & WHEEL: Ball rotates with the wheel
+        // No complex calculations needed - ball and wheel move together!
         
-        // Find the physical position of the target number on the wheel
-        let targetPhysicalIndex = wheelNumbers.firstIndex(of: targetNumber) ?? 0
-        let targetPhysicalAngle = Double(targetPhysicalIndex) * (360.0 / Double(wheelNumbers.count))
-        
-        // COORDINATE SYSTEM CORRECTION: Add -9 segment offset
-        // Testing shows consistent +9 segment offset, so we subtract 9 to compensate
-        let segmentAngle = 360.0 / Double(wheelNumbers.count) // 9.47°
-        let coordinateOffset = -9.0 * segmentAngle // -85.23°
-        
-        // Ball needs to land at the target number's position with coordinate correction
-        // Account for the wheel's actual final position
-        let ballFinalRotation = targetPhysicalAngle + calculatedWheelRotation + coordinateOffset
-        
-        print("⚽ BALL LANDS ON RIGGED NUMBER:")
-        print("   • Target Number: \(targetString)")
-        print("   • Target Physical Index: \(targetPhysicalIndex)")
-        print("   • Target Physical Angle: \(targetPhysicalAngle)°")
-        print("   • Wheel Final Position: \(calculatedWheelRotation)°")
-        print("   • Coordinate Offset: \(coordinateOffset)° (-9 segments)")
-        print("   • Ball Final Rotation: \(ballFinalRotation)°")
-        print("   • Ball lands on segment showing \(targetString)")
-        print("   • Coordinate system corrected for -9 segment offset")
-        
-        // Start ball spinning to final position
-        ballRotation = ballFinalRotation
+        if let riggedNumber = riggedNumber {
+            // RIGGED MODE: Ball lands on specific target number
+            // Find where the target number is positioned on the wheel
+            let targetPhysicalIndex = wheelNumbers.firstIndex(of: targetNumber) ?? 0
+            let targetPhysicalAngle = Double(targetPhysicalIndex) * (360.0 / Double(wheelNumbers.count))
+            
+            // Ball rotates with wheel + lands on target position
+            let ballFinalRotation = calculatedWheelRotation + targetPhysicalAngle
+            
+            print("⚽ SYNCHRONIZED BALL & WHEEL (RIGGED):")
+            print("   • Target Number: \(targetString)")
+            print("   • Target Physical Index: \(targetPhysicalIndex)")
+            print("   • Target Physical Angle: \(targetPhysicalAngle)°")
+            print("   • Wheel Final Position: \(calculatedWheelRotation)°")
+            print("   • Ball Final Rotation: \(ballFinalRotation)°")
+            print("   • Ball rotates with wheel and lands on \(targetString)")
+            
+            ballRotation = ballFinalRotation
+        } else {
+            // NON-RIGGED MODE: Ball lands randomly
+            let randomBallRotation = Double.random(in: 3600...7200) // Spin 10-20 full rotations
+            ballRotation = randomBallRotation
+        }
         
         // Ball radius animation (moves inward as it slows)
         ballRadius = 85
@@ -327,6 +325,19 @@ struct RouletteWheelView: View {
             // All animations are complete - wheel and ball are now still
             showResult = true
             showWheelResults = true // Keep wheel visible
+            
+            // CALCULATE ACTUAL RESULT based on where ball landed
+            let actualLandingIndex = calculateBallLandingIndex()
+            
+            // Use the same wheel sequence for consistency
+            let wheelSequence = wheelNumbers.map { String($0) }
+            
+            let actualLandingNumberString = wheelSequence[actualLandingIndex]
+            let actualLandingNumber = Int(actualLandingNumberString) ?? 0
+            let actualLandingColor = getRouletteColorForNumber(actualLandingNumber)
+            
+            // Update the result to match where ball actually landed
+            result = RouletteResult(number: actualLandingNumber, color: actualLandingColor, timestamp: Date())
             
             // Notify that animation is complete
             onAnimationComplete?()
@@ -368,6 +379,63 @@ struct RouletteWheelView: View {
             return AppTheme.casinoRed
         default:
             return AppTheme.casinoBlack
+        }
+    }
+    
+    // Calculate where the ball actually landed based on final rotation
+    private func calculateBallLandingIndex() -> Int {
+        // DEBUG: Log the current values
+        print("🔍 BALL LANDING CALCULATION DEBUG:")
+        print("   • Ball Rotation: \(ballRotation)°")
+        print("   • Wheel Rotation: \(wheelRotation)°")
+        print("   • Ball Size: 12x12 (was 16x16)")
+        
+        // Use the same array that draws the wheel for consistency
+        let wheelSequence = wheelNumbers.map { String($0) }
+        
+        print("   • Using wheelNumbers array (38 slots) - same as visual wheel")
+        print("   • Wheel Sequence: \(wheelSequence)")
+        
+        // Find the visual landing position by looking at the wheel's final rotation
+        let normalizedWheelAngle = wheelRotation.truncatingRemainder(dividingBy: 360)
+        let segmentAngle = 360.0 / Double(wheelSequence.count)
+        
+        // The wheel stops with a specific segment at the top
+        let topSegmentIndex = Int(round(normalizedWheelAngle / segmentAngle)) % wheelSequence.count
+        let topSegmentNumber = wheelSequence[topSegmentIndex]
+        
+        print("   • Normalized Wheel Angle: \(normalizedWheelAngle)°")
+        print("   • Top Segment Index: \(topSegmentIndex)")
+        print("   • Top Segment Number: \(topSegmentNumber)")
+        
+        // APPROACH G: WHEEL-REFERENCED BALL LANDING
+        // Use wheel's top segment as reference point for accurate ball landing
+        let wheelTopPosition = wheelRotation.truncatingRemainder(dividingBy: 360)
+        let wheelTopIndex = Int(round(wheelTopPosition / segmentAngle)) % wheelSequence.count
+        let wheelTopNumber = wheelSequence[wheelTopIndex]
+        
+        print("   • APPROACH G - WHEEL-REFERENCED LANDING:")
+        print("   • Wheel Top Position: \(wheelTopPosition)°")
+        print("   • Wheel Top Index: \(wheelTopIndex)")
+        print("   • Wheel Top Number: \(wheelTopNumber)")
+        
+        // Since ball and wheel rotate together, the ball lands on the wheel's top segment
+        // This is the most reliable way to determine the result
+        let landingNumber = wheelTopNumber
+        
+        print("   • ✅ WHEEL-REFERENCED: Ball lands on \(landingNumber) - matches wheel top!")
+        
+        return wheelTopIndex
+    }
+    
+    // Convert Color to RouletteColor for result creation
+    private func getRouletteColorForNumber(_ number: Int) -> RouletteColor {
+        switch number {
+        case 0, 37: return .green // 0 and 00 (37) are green
+        case 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36:
+            return .red
+        default:
+            return .black
         }
     }
 }

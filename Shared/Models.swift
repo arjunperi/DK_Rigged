@@ -156,6 +156,48 @@ enum RouletteBetType: Codable, Hashable {
             return 3.0 // 2:1 payout
         }
     }
+    
+    // Check if this bet type wins for a given result number
+    func isWinningBet(for resultNumber: Int) -> Bool {
+        switch self {
+        case .singleNumber(let number):
+            return number == resultNumber
+        case .split(let numbers):
+            return numbers.contains(resultNumber)
+        case .street(let numbers):
+            return numbers.contains(resultNumber)
+        case .corner(let numbers):
+            return numbers.contains(resultNumber)
+        case .fiveNumber:
+            return [0, 37, 1, 2, 3].contains(resultNumber)
+        case .line(let numbers):
+            return numbers.contains(resultNumber)
+        case .red:
+            return [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].contains(resultNumber)
+        case .black:
+            return [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35].contains(resultNumber)
+        case .even:
+            return resultNumber != 0 && resultNumber != 37 && resultNumber % 2 == 0
+        case .odd:
+            return resultNumber != 0 && resultNumber != 37 && resultNumber % 2 == 1
+        case .low:
+            return resultNumber >= 1 && resultNumber <= 18
+        case .high:
+            return resultNumber >= 19 && resultNumber <= 36
+        case .dozen1:
+            return resultNumber >= 1 && resultNumber <= 12
+        case .dozen2:
+            return resultNumber >= 13 && resultNumber <= 24
+        case .dozen3:
+            return resultNumber >= 25 && resultNumber <= 36
+        case .column1:
+            return resultNumber % 3 == 1 && resultNumber != 37
+        case .column2:
+            return resultNumber % 3 == 2 && resultNumber != 37
+        case .column3:
+            return resultNumber % 3 == 0 && resultNumber != 0 && resultNumber != 37
+        }
+    }
 }
 
 enum SportsBetType: Codable {
