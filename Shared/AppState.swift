@@ -413,8 +413,8 @@ class AppState: ObservableObject {
         // Process the bets and update balance
         processRouletteBets(result)
         
-        // Clear all bets completely for a fresh game
-        clearAllBets()
+        // Don't clear bets here - let the CasinoView show results first
+        // Bets will be cleared after the user dismisses the results screen
         
         // Don't clear rigged mode here - it will be cleared after the wheel animation completes
         // This ensures the rig stays active for the entire wheel animation
@@ -427,6 +427,11 @@ class AppState: ObservableObject {
             selectedRiggedNumber = nil
             selectedRiggedColor = nil
         }
+    }
+    
+    func clearBetsAfterResults() {
+        // Clear all bets after the results have been shown
+        clearAllBets()
     }
 }
 

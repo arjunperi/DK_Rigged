@@ -388,6 +388,7 @@ struct RiggedControlsView: View {
 
 // MARK: - Result Overlay
 struct ResultOverlayView: View {
+    @EnvironmentObject var appState: AppState
     let result: RouletteResult
     let bets: [Bet]
     @Binding var isShowing: Bool
@@ -486,6 +487,9 @@ struct ResultOverlayView: View {
                 }
 
                 Button("Continue") {
+                    // Clear bets after showing results
+                    appState.clearBetsAfterResults()
+                    
                     withAnimation(.easeOut(duration: 0.3)) {
                         isShowing = false
                     }

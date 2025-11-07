@@ -24,7 +24,7 @@ private final class SimpleRoulette {
     @inline(__always) func norm(_ a: Double) -> Double {
         let x = a.truncatingRemainder(dividingBy: 360.0)
         return x < 0 ? x + 360.0 : x
-    }
+    } 
 
     // Core: compute final angles for wheel and ball
     struct SpinPlan {
