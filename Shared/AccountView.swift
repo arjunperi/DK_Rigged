@@ -83,6 +83,7 @@ struct UserProfileHeader: View {
 struct BalanceSection: View {
     @EnvironmentObject var appState: AppState
     @State private var showingAddFunds = false
+    @State private var showingWithdraw = false
     
     var body: some View {
         VStack(spacing: 16) {
@@ -111,14 +112,14 @@ struct BalanceSection: View {
                     .cornerRadius(12)
                 }
                 
-                Button(action: {}) {
+                Button(action: { showingWithdraw = true }) {
                     HStack {
                         Image(systemName: "arrow.up.circle.fill")
                         Text("Withdraw")
                     }
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(Color.gray)
+                    .background(Color.green)
                     .foregroundColor(.white)
                     .cornerRadius(12)
                 }
@@ -132,6 +133,9 @@ struct BalanceSection: View {
         )
         .sheet(isPresented: $showingAddFunds) {
             AddFundsSheet()
+        }
+        .sheet(isPresented: $showingWithdraw) {
+            WithdrawSheet()
         }
     }
 }
@@ -351,6 +355,16 @@ struct AddFundsSheet: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var appState: AppState
     @State private var amount = ""
+    @State private var selectedBank = "Bank of America ****1234"
+    @State private var showingConfirmation = false
+    @State private var showingError = false
+    @State private var errorMessage = ""
+    
+    let bankAccounts = [
+        "Bank of America ****1234",
+        "Chase ****5678",
+        "Wells Fargo ****9012"
+    ]
     
     var body: some View {
         NavigationView {
@@ -359,6 +373,56 @@ struct AddFundsSheet: View {
                     .font(.title2)
                     .fontWeight(.bold)
                 
+                // Current balance
+                VStack(spacing: 4) {
+                    Text("Current Balance")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("$\(String(format: "%.2f", appState.currentUser.balance))")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.green)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.blue.opacity(0.1))
+                )
+                
+                // Bank account selection
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Bank Account")
+                        .font(.headline)
+                        .fontWeight(.medium)
+                    
+                    Menu {
+                        ForEach(bankAccounts, id: \.self) { bank in
+                            Button(bank) {
+                                selectedBank = bank
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "building.columns.fill")
+                                .foregroundColor(.blue)
+                            Text(selectedBank)
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                }
+                
+                // Amount input
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Amount")
                         .font(.headline)
@@ -395,14 +459,38 @@ struct AddFundsSheet: View {
             }
             .padding()
             .navigationTitle("Add Funds")
+            .alert("Deposit Successful", isPresented: $showingConfirmation) {
+                Button("OK") {
+                    presentationMode.wrappedValue.dismiss()
+                }
+            } message: {
+                Text("$\(amount) has been transferred from \(selectedBank) to your account.")
+            }
+            .alert("Deposit Failed", isPresented: $showingError) {
+                Button("OK") { }
+            } message: {
+                Text(errorMessage)
+            }
         }
     }
     
     private func addFunds() {
-        if let amountValue = Double(amount) {
-            appState.addFunds(amountValue)
-            presentationMode.wrappedValue.dismiss()
+        guard let amountValue = Double(amount) else {
+            errorMessage = "Please enter a valid amount."
+            showingError = true
+            return
         }
+        
+        // Validate amount
+        if amountValue <= 0 {
+            errorMessage = "Amount must be greater than $0."
+            showingError = true
+            return
+        }
+        
+        // Process deposit
+        appState.addFunds(amountValue)
+        showingConfirmation = true
     }
 }
 
@@ -424,6 +512,157 @@ struct QuickAmountButton: View {
                 )
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct WithdrawSheet: View {
+    @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var appState: AppState
+    @State private var amount = ""
+    @State private var selectedBank = "Bank of America ****1234"
+    @State private var showingConfirmation = false
+    @State private var showingError = false
+    @State private var errorMessage = ""
+    
+    let bankAccounts = [
+        "Bank of America ****1234",
+        "Chase ****5678",
+        "Wells Fargo ****9012"
+    ]
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Withdraw Funds")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                // Available balance
+                VStack(spacing: 4) {
+                    Text("Available Balance")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("$\(String(format: "%.2f", appState.currentUser.balance))")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.green)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.green.opacity(0.1))
+                )
+                
+                // Bank account selection
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Bank Account")
+                        .font(.headline)
+                        .fontWeight(.medium)
+                    
+                    Menu {
+                        ForEach(bankAccounts, id: \.self) { bank in
+                            Button(bank) {
+                                selectedBank = bank
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "building.columns.fill")
+                                .foregroundColor(.blue)
+                            Text(selectedBank)
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                }
+                
+                // Amount input
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Amount")
+                        .font(.headline)
+                        .fontWeight(.medium)
+                    
+                    TextField("Enter amount", text: $amount)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                
+                // Quick amount buttons
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
+                    QuickAmountButton(amount: "25", action: { amount = "25" })
+                    QuickAmountButton(amount: "50", action: { amount = "50" })
+                    QuickAmountButton(amount: "100", action: { amount = "100" })
+                    QuickAmountButton(amount: "250", action: { amount = "250" })
+                    QuickAmountButton(amount: "500", action: { amount = "500" })
+                    QuickAmountButton(amount: "All", action: { 
+                        amount = String(format: "%.2f", appState.currentUser.balance)
+                    })
+                }
+                
+                Button(action: withdrawFunds) {
+                    Text("Withdraw Funds")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(amount.isEmpty ? Color.gray : Color.green)
+                        )
+                }
+                .disabled(amount.isEmpty)
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Withdraw")
+            .alert("Withdrawal Successful", isPresented: $showingConfirmation) {
+                Button("OK") {
+                    presentationMode.wrappedValue.dismiss()
+                }
+            } message: {
+                Text("$\(amount) has been transferred to \(selectedBank). Funds will arrive in 1-3 business days.")
+            }
+            .alert("Withdrawal Failed", isPresented: $showingError) {
+                Button("OK") { }
+            } message: {
+                Text(errorMessage)
+            }
+        }
+    }
+    
+    private func withdrawFunds() {
+        guard let amountValue = Double(amount) else {
+            errorMessage = "Please enter a valid amount."
+            showingError = true
+            return
+        }
+        
+        // Validate amount
+        if amountValue <= 0 {
+            errorMessage = "Amount must be greater than $0."
+            showingError = true
+            return
+        }
+        
+        if amountValue > appState.currentUser.balance {
+            errorMessage = "Insufficient funds. Your available balance is $\(String(format: "%.2f", appState.currentUser.balance))."
+            showingError = true
+            return
+        }
+        
+        // Process withdrawal
+        appState.withdrawFunds(amountValue)
+        showingConfirmation = true
     }
 }
 

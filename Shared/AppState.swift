@@ -23,8 +23,7 @@ class AppState: ObservableObject {
         // Load sample sports events
         upcomingEvents = [
             SportsEvent(homeTeam: "Patriots", awayTeam: "Bills", sport: .football, startTime: Date().addingTimeInterval(3600)),
-            SportsEvent(homeTeam: "Lakers", awayTeam: "Warriors", sport: .basketball, startTime: Date().addingTimeInterval(7200)),
-            SportsEvent(homeTeam: "Yankees", awayTeam: "Red Sox", sport: .baseball, startTime: Date().addingTimeInterval(10800))
+            SportsEvent(homeTeam: "Lakers", awayTeam: "Warriors", sport: .basketball, startTime: Date().addingTimeInterval(7200))
         ]
         
         // Load sample roulette history

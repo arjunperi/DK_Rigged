@@ -254,7 +254,6 @@ struct RouletteBet {
 enum Sport: String, CaseIterable {
     case football = "Football"
     case basketball = "Basketball"
-    case baseball = "Baseball"
     case soccer = "Soccer"
     case hockey = "Hockey"
     
@@ -264,8 +263,6 @@ enum Sport: String, CaseIterable {
             return "🏈"
         case .basketball:
             return "🏀"
-        case .baseball:
-            return "⚾"
         case .soccer:
             return "⚽"
         case .hockey:
